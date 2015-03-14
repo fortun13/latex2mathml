@@ -12,23 +12,34 @@ import Scanner.Definitions
 
 --TODO comments not working
 
-scan :: String -> Char -> ([Token],String)
-scan [] _ = ([],[])
-scan lst@(h:t) stopSign
+scan :: String -> ([Token],String)
+scan lst = flip tokenize '\n' (prepareInput lst "")
+
+prepareInput :: String -> String -> String
+prepareInput [] buffer = reverse buffer
+prepareInput lst@(h:t) buffer
+    | h == '%' = prepareInput (snd $ splitAt ((fromJust (elemIndex '\n' lst))+1) lst) buffer
+    | h == ' ' = prepareInput t buffer
+    | t == [] = reverse ('\n':h:buffer)
+    | otherwise = prepareInput t (h:buffer)
+
+tokenize :: String -> Char -> ([Token],String)
+tokenize [] _ = ([],[])
+tokenize lst@(h:t) stopSign
     | h == stopSign = ([],t)
     | h == '\\' = iterateOver (readCommand) t stopSign
-    | h == ' ' || h == '\n' = scan t stopSign
+    | h == ' ' || h == '\n' = tokenize t stopSign
 --    | h == '{' = iterateOver readCommandBody lst stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
-    | h == '%' = scan (snd (splitAt ((fromJust (elemIndex '\n' lst))+1) lst)) stopSign
+    | h == '%' = tokenize (snd (splitAt ((fromJust (elemIndex '\n' lst))+1) lst)) stopSign
     | lst == [] = ([],[])
 --    | otherwise = iterateOver readString lst stopSign
     | otherwise = iterateOver readString lst stopSign
 
 iterateOver function lst stopSign =
     let tmp = function lst ""
-        tmp2 = scan (snd tmp) stopSign
+        tmp2 = tokenize (snd tmp) stopSign
     in ([fst tmp] ++ fst tmp2,snd tmp2)
 
 readString :: String -> String -> (Token,String)
@@ -68,7 +79,7 @@ getGreekSymbol comm
 readCommandBody :: String -> ([[Token]],String)
 readCommandBody [] = ([],[])
 readCommandBody ('{':t) =
-    let tmp = scan t '}'
+    let tmp = tokenize t '}'
         tmp2 = readCommandBody (snd tmp)
     in ([fst tmp] ++ fst tmp2,snd tmp2)
 readCommandBody lst = ([],lst)
@@ -80,7 +91,7 @@ readInlineCommand name lst = readCommandWithParameters name lst InlineCommand
 readParameters :: String -> ([Token],String)
 readParameters [] = ([],[])
 readParameters lst@(h:t)
-    | h == '[' = scan lst ']'
+    | h == '[' = tokenize lst ']'
     | otherwise = ([],lst)
 
 readComplexCommand :: String -> String -> (Token,String)
@@ -111,16 +122,16 @@ readSub lst buffer = readSupOrSub lst Sub
 readSupOrSub :: String -> ([Token] -> Token) -> (Token,String)
 readSupOrSub [] _ = (End,[])
 readSupOrSub (h:[]) type' =
-    let tmp = scan [h] ' '
+    let tmp = tokenize [h] ' '
     in (type' (fst tmp),[])
 readSupOrSub lst@(h:h2:t) type'
     | h == '{' =
-        let tmp = scan (h2:t) '}'
+        let tmp = tokenize (h2:t) '}'
         in (type' (fst tmp),snd tmp)
     | h == '\\' =
-        let tmp = scan lst ' '
+        let tmp = tokenize lst ' '
         in (type' (fst tmp),snd tmp)
     | otherwise =
-        let tmp = scan [h] ' '
+        let tmp = tokenize [h] ' '
         in (type' (fst tmp),(h2:t))
 
