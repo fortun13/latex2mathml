@@ -19,7 +19,7 @@ prepareInput :: String -> String -> String
 prepareInput [] buffer = reverse buffer
 prepareInput lst@(h:t) buffer
     | h == '%' = prepareInput (snd $ splitAt ((fromJust (elemIndex '\n' lst))+1) lst) buffer
-    | h == ' ' = prepareInput t buffer
+    | h == ' '  || h == '\n' = prepareInput t buffer
     | t == [] = reverse ('\n':h:buffer)
     | otherwise = prepareInput t (h:buffer)
 
@@ -29,12 +29,13 @@ tokenize lst@(h:t) stopSign
     | h == stopSign = ([],t)
     | h == '\\' = iterateOver (readCommand) t stopSign
     | h == ' ' || h == '\n' = tokenize t stopSign
---    | h == '{' = iterateOver readCommandBody lst stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
-    | h == '%' = tokenize (snd (splitAt ((fromJust (elemIndex '\n' lst))+1) lst)) stopSign
+    | isDigit h = iterateOver readNumber lst stopSign
+    | elem h "+-*/=!():<>|[]&" = 
+        let tmp = tokenize t stopSign
+        in ([Operator h] ++ (fst tmp),snd tmp)
     | lst == [] = ([],[])
---    | otherwise = iterateOver readString lst stopSign
     | otherwise = iterateOver readString lst stopSign
 
 iterateOver function lst stopSign =
@@ -46,8 +47,15 @@ readString :: String -> String -> (Token,String)
 readString [] [] = (End,[])
 readString [] buffer = (MyStr $ reverse buffer,[])
 readString lst@(h:t) buffer
-    | isLetter h || isDigit h || elem h "+-*/=!<>:|()." = readString t (h:buffer)
+    | isLetter h = readString t (h:buffer)
     | otherwise = (MyStr $ reverse buffer,lst)
+
+readNumber :: String -> String -> (Token,String)
+readNumber [] [] = (End,[])
+readNumber [] buffer = (MyNum $ reverse buffer,[])
+readNumber lst@(h:t) buffer
+    | isDigit h || h == '.' = readNumber t (h:buffer)
+    | otherwise = (MyNum $ reverse buffer,lst)
 
 readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
@@ -91,7 +99,7 @@ readInlineCommand name lst = readCommandWithParameters name lst InlineCommand
 readParameters :: String -> ([Token],String)
 readParameters [] = ([],[])
 readParameters lst@(h:t)
-    | h == '[' = tokenize lst ']'
+    | h == '[' = tokenize t ']'
     | otherwise = ([],lst)
 
 readComplexCommand :: String -> String -> (Token,String)

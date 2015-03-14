@@ -8,7 +8,8 @@ data Token = CommandBodyless Bodylesstype |
     MyStr String |
     Sub [Token] |
     Sup [Token] |
-    Bracket Char |
+    Operator Char |
+    MyNum String |
     End
     deriving (Show,Eq)
 
