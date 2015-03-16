@@ -2,7 +2,7 @@ module Scanner.Definitions where
 
 -- in ComplexCommand and InlineCommand first [Token] is for parameters, second for actual command body
 
-data Token = CommandBodyless Bodylesstype |
+data Token = CommandBodyless String |
     InlineCommand String [Token] [[Token]] |
     ComplexCommand String [Token] [Token] |
     MyStr String |
@@ -14,10 +14,10 @@ data Token = CommandBodyless Bodylesstype |
     ComplexEnd
     deriving (Show,Eq)
 
-data Bodylesstype = Greek GreekSymbol Bool | Math | Relation | Binary | SetAndLogic deriving (Show,Eq)
+-- data Bodylesstype = Greek GreekSymbol Bool | Math | Relation | Binary | SetAndLogic deriving (Show,Eq)
 
 --bool is fo "isUpper"
-data GreekSymbol = Alpha | Beta | Gamma | Delta deriving (Show,Eq)
+-- data GreekSymbol = Alpha | Beta | Gamma | Delta deriving (Show,Eq)
 
 --instance Eq Token where
 --    (CommandInline str1 atoms1) == (CommandInline str2 atoms2) = ((atoms1 == atoms2) && (str1 == str2))

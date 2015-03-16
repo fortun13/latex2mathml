@@ -1,24 +1,19 @@
 module Scanner.Main (scan) where
 
-import Data.Char (isDigit,isLetter,toLower,isUpper)
+import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
 import Scanner.Definitions
 
---TODO [] - meaning is dependend on the context :( (so, i guess, in scanner it should only be in SquareBracket or smth (and parser would take care of using it properly)
---TODO same with & (used in tables, matrices etc.)
-
---TODO problem with [] - i should be using it in readString, but somehow i have to know if i'm using readParameters
-
 scan :: String -> ([Token],String)
-scan lst = flip tokenize '\n' (prepareInput lst "")
+scan lst = tokenize (prepareInput lst "") '\n'
 
 prepareInput :: String -> String -> String
 prepareInput [] buffer = reverse buffer
 prepareInput lst@(h:t) buffer
-    | h == '%' = prepareInput (snd $ splitAt ((fromJust (elemIndex '\n' lst))+1) lst) buffer
-    | h == ' ' = prepareInput t buffer
-    | t == [] = reverse ('\n':h:buffer)
+    | h == '%' = prepareInput (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst) buffer
+--     | h == ' ' = prepareInput t buffer
+    | null t = reverse ('\n':h:buffer)
     | otherwise = prepareInput t (h:buffer)
 
 tokenize :: String -> Char -> ([Token],String)
@@ -30,18 +25,17 @@ tokenize lst@(h:t) stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
     | isDigit h = iterateOver readNumber lst stopSign
-    | elem h "+-*/=!():<>|[]&\n" =
+    | h `elem` "+-*/=!():<>|[]&\n" =
         let tmp = tokenize t stopSign
-        in ([Operator h] ++ (fst tmp),snd tmp)
+        in (Operator h : fst tmp,snd tmp)
     | otherwise = iterateOver readString lst stopSign
 
 iterateOver :: (t -> String -> (Token,String)) -> t -> Char -> ([Token],String)
 iterateOver function lst stopSign
-    | (fst tmp) == ComplexEnd = ([],snd tmp)
-    | otherwise = ([fst tmp] ++ fst tmp2,snd tmp2)
+    | fst tmp == ComplexEnd = ([],snd tmp)
+    | otherwise = (fst tmp : fst tmp2,snd tmp2)
     where tmp = function lst ""
           tmp2 = tokenize (snd tmp) stopSign
-
 
 readString :: String -> String -> (Token,String)
 readString [] [] = (End,[])
@@ -59,41 +53,22 @@ readNumber lst@(h:t) buffer
 
 readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
-readCommand [] buffer = (createBodylessCommand $ reverse buffer,[])
+readCommand [] buffer = (CommandBodyless $ reverse buffer,[])
 readCommand lst@(h:t) buffer
-    | lst == [] || h == ' ' = (createBodylessCommand $ reverse buffer,lst)
+    | null lst || h == ' ' = (CommandBodyless $ reverse buffer,lst)
     | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
-    | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt ((fromJust (elemIndex '}' lst))+1) lst)
-    | (h == '{' || h == '[') = readInlineCommand (reverse buffer) lst
+    | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
+    | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
     | h == '\\' = (Operator '\n',t)
     | otherwise = readCommand t (h:buffer)
-
-createBodylessCommand :: String -> Token
-createBodylessCommand comm
-    | isGreekCommand comm = CommandBodyless $ getGreekByName comm
-
-isGreekCommand :: String -> Bool
-isGreekCommand comm
-    | elem (map (\x -> toLower x) comm) ["alpha","beta","gamma"] = True
-    | otherwise = False
-
-getGreekByName :: String -> Bodylesstype
-getGreekByName (h:t) = Greek (getGreekSymbol ((toLower h):t)) (isUpper h)
-
-getGreekSymbol :: String -> GreekSymbol
-getGreekSymbol comm
-    | comm == "alpha" = Alpha
-    | comm == "beta" = Beta
-    | comm == "gamma" = Gamma
 
 readCommandBody :: String -> ([[Token]],String)
 readCommandBody ('{':t) =
     let tmp = tokenize t '}'
         tmp2 = readCommandBody (snd tmp)
-    in ([fst tmp] ++ fst tmp2,snd tmp2)
+    in (fst tmp : fst tmp2,snd tmp2)
 readCommandBody lst = ([],lst)
 
--- commandName restOfInput Buffer
 readInlineCommand :: String -> String -> (Token,String)
 readInlineCommand name lst =
     let par = readParameters lst
@@ -114,7 +89,7 @@ readComplexCommand lst
     where ([[MyStr commName]],rest) = readCommandBody lst
 
 isComplexCommand :: String -> Bool
-isComplexCommand comm = elem comm ["matrix","table","array"]
+isComplexCommand comm = comm `elem` ["matrix","table","array"]
 
 readSup :: String -> String -> (Token,String)
 readSup lst _ = readSupOrSub lst Sup
@@ -124,17 +99,14 @@ readSub lst _ = readSupOrSub lst Sub
 
 readSupOrSub :: String -> ([Token] -> Token) -> (Token,String)
 readSupOrSub [] _ = (End,[])
-readSupOrSub (h:[]) type' =
-    let tmp = tokenize [h] ' '
-    in (type' (fst tmp),[])
-readSupOrSub lst@(h:h2:t) type'
-    | h == '{' =
-        let tmp = tokenize (h2:t) '}'
-        in (type' (fst tmp),snd tmp)
-    | h == '\\' =
-        let tmp = tokenize lst ' '
-        in (type' (fst tmp),snd tmp)
+readSupOrSub lst@(h:t) type'
+    | h == '{' = runTokenize t '}' type'
+    | h == '\\' = runTokenize lst ' ' type'
     | otherwise =
         let tmp = tokenize [h] ' '
-        in (type' (fst tmp),(h2:t))
+        in (type' (fst tmp),t)
 
+runTokenize :: String -> Char -> ([Token] -> Token) -> (Token,String)
+runTokenize lst stopSign type' =
+    let tmp = tokenize lst stopSign
+    in (type' (fst tmp),snd tmp)
