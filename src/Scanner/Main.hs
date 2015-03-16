@@ -10,8 +10,6 @@ import Scanner.Definitions
 
 --TODO problem with [] - i should be using it in readString, but somehow i have to know if i'm using readParameters
 
---TODO comments not working
-
 scan :: String -> ([Token],String)
 scan lst = flip tokenize '\n' (prepareInput lst "")
 
@@ -19,7 +17,7 @@ prepareInput :: String -> String -> String
 prepareInput [] buffer = reverse buffer
 prepareInput lst@(h:t) buffer
     | h == '%' = prepareInput (snd $ splitAt ((fromJust (elemIndex '\n' lst))+1) lst) buffer
-    | h == ' '  || h == '\n' = prepareInput t buffer
+    | h == ' ' = prepareInput t buffer
     | t == [] = reverse ('\n':h:buffer)
     | otherwise = prepareInput t (h:buffer)
 
@@ -27,21 +25,23 @@ tokenize :: String -> Char -> ([Token],String)
 tokenize [] _ = ([],[])
 tokenize lst@(h:t) stopSign
     | h == stopSign = ([],t)
-    | h == '\\' = iterateOver (readCommand) t stopSign
+    | h == '\\' = iterateOver readCommand t stopSign
     | h == ' ' || h == '\n' = tokenize t stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
     | isDigit h = iterateOver readNumber lst stopSign
-    | elem h "+-*/=!():<>|[]&" = 
+    | elem h "+-*/=!():<>|[]&\n" =
         let tmp = tokenize t stopSign
         in ([Operator h] ++ (fst tmp),snd tmp)
-    | lst == [] = ([],[])
     | otherwise = iterateOver readString lst stopSign
 
-iterateOver function lst stopSign =
-    let tmp = function lst ""
-        tmp2 = tokenize (snd tmp) stopSign
-    in ([fst tmp] ++ fst tmp2,snd tmp2)
+iterateOver :: (t -> String -> (Token,String)) -> t -> Char -> ([Token],String)
+iterateOver function lst stopSign
+    | (fst tmp) == ComplexEnd = ([],snd tmp)
+    | otherwise = ([fst tmp] ++ fst tmp2,snd tmp2)
+    where tmp = function lst ""
+          tmp2 = tokenize (snd tmp) stopSign
+
 
 readString :: String -> String -> (Token,String)
 readString [] [] = (End,[])
@@ -62,8 +62,10 @@ readCommand [] [] = (End,[])
 readCommand [] buffer = (createBodylessCommand $ reverse buffer,[])
 readCommand lst@(h:t) buffer
     | lst == [] || h == ' ' = (createBodylessCommand $ reverse buffer,lst)
-    | (h == '{' || h == '[') && (isComplexCommand $ reverse buffer) = readComplexCommand (reverse buffer) lst
+    | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
+    | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt ((fromJust (elemIndex '}' lst))+1) lst)
     | (h == '{' || h == '[') = readInlineCommand (reverse buffer) lst
+    | h == '\\' = (Operator '\n',t)
     | otherwise = readCommand t (h:buffer)
 
 createBodylessCommand :: String -> Token
@@ -76,7 +78,7 @@ isGreekCommand comm
     | otherwise = False
 
 getGreekByName :: String -> Bodylesstype
-getGreekByName comm@(h:t) = Greek (getGreekSymbol ((toLower h):t)) (isUpper h)
+getGreekByName (h:t) = Greek (getGreekSymbol ((toLower h):t)) (isUpper h)
 
 getGreekSymbol :: String -> GreekSymbol
 getGreekSymbol comm
@@ -85,7 +87,6 @@ getGreekSymbol comm
     | comm == "gamma" = Gamma
 
 readCommandBody :: String -> ([[Token]],String)
-readCommandBody [] = ([],[])
 readCommandBody ('{':t) =
     let tmp = tokenize t '}'
         tmp2 = readCommandBody (snd tmp)
@@ -94,38 +95,32 @@ readCommandBody lst = ([],lst)
 
 -- commandName restOfInput Buffer
 readInlineCommand :: String -> String -> (Token,String)
-readInlineCommand name lst = readCommandWithParameters name lst InlineCommand
-
-readParameters :: String -> ([Token],String)
-readParameters [] = ([],[])
-readParameters lst@(h:t)
-    | h == '[' = tokenize t ']'
-    | otherwise = ([],lst)
-
-readComplexCommand :: String -> String -> (Token,String)
-readComplexCommand name lst = readCommandWithParameters name lst ComplexCommand
-
-readCommandWithParameters _ [] _ = (End,[])
-readCommandWithParameters name lst type' =
+readInlineCommand name lst =
     let par = readParameters lst
         body = readCommandBody (snd par)
-    in  (type' name (fst par) (fst body),snd body)
---    | h == '[' =
---        let par = readParameters t
---            body = readCommandBody (snd par)
---        in  (type' name (fst par) (fst body),snd body)
---    | otherwise =
---        let body = readCommandBody lst
---        in (type' name [] ())
+    in (InlineCommand name (fst par) (fst body),snd body)
+
+readParameters :: String -> ([Token],String)
+readParameters ('[':t) = tokenize t ']'
+readParameters lst = ([],lst)
+
+readComplexCommand :: String -> (Token,String)
+readComplexCommand [] = (End,[])
+readComplexCommand lst
+    | isComplexCommand commName =
+        let par = readParameters rest
+            tmp = tokenize (snd par) '}'
+        in (ComplexCommand commName (fst par) (fst tmp),snd tmp)
+    where ([[MyStr commName]],rest) = readCommandBody lst
 
 isComplexCommand :: String -> Bool
 isComplexCommand comm = elem comm ["matrix","table","array"]
 
 readSup :: String -> String -> (Token,String)
-readSup lst buffer = readSupOrSub lst Sup
+readSup lst _ = readSupOrSub lst Sup
 
 readSub :: String -> String -> (Token,String)
-readSub lst buffer = readSupOrSub lst Sub
+readSub lst _ = readSupOrSub lst Sub
 
 readSupOrSub :: String -> ([Token] -> Token) -> (Token,String)
 readSupOrSub [] _ = (End,[])

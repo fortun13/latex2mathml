@@ -4,13 +4,14 @@ module Scanner.Definitions where
 
 data Token = CommandBodyless Bodylesstype |
     InlineCommand String [Token] [[Token]] |
-    ComplexCommand String [Token] [[Token]] |
+    ComplexCommand String [Token] [Token] |
     MyStr String |
     Sub [Token] |
     Sup [Token] |
     Operator Char |
     MyNum String |
-    End
+    End |
+    ComplexEnd
     deriving (Show,Eq)
 
 data Bodylesstype = Greek GreekSymbol Bool | Math | Relation | Binary | SetAndLogic deriving (Show,Eq)

@@ -5,7 +5,7 @@ import Scanner.Definitions
 import Scanner.Main
 
 tests :: Test
-tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7]
+tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8]
 
 test1 :: Test
 test1 = TestCase (assertEqual "Testing simple Sup"
@@ -41,3 +41,8 @@ test7 :: Test
 test7 = TestCase (assertEqual "Square bracket testing"
     ([Operator '[',Operator ']', InlineCommand "sqrt" [MyStr "n"] [[MyNum "1"],[MyNum "2"]]],"")
     (scan "[] \\sqrt[n]{1}{2}"))
+
+test8 :: Test
+test8 = TestCase (assertEqual "Complex Command testing"
+    ([ComplexCommand "matrix" [] [MyNum "2",Operator '&',MyNum "2",Operator '\n',MyNum "3",Operator '&',MyNum "4"]],"")
+    (scan "\\begin{matrix} 2 & 2 \\\\ 3 & 4 \\end{matrix}"))
