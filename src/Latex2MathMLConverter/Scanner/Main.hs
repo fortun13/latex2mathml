@@ -1,9 +1,9 @@
-module Scanner.Main (scan) where
+module Latex2MathMLConverter.Scanner.Main (scan) where
 
 import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
-import Scanner.Definitions
+import Latex2MathMLConverter.Utils.Definitions
 
 scan :: String -> ([Token],String)
 scan lst = tokenize (prepareInput lst "") '\n'
@@ -25,10 +25,11 @@ tokenize lst@(h:t) stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
     | isDigit h = iterateOver readNumber lst stopSign
-    | h `elem` "+-*/=!():<>|[]&\n" =
+    | elem h operators =
         let tmp = tokenize t stopSign
         in (Operator h : fst tmp,snd tmp)
-    | otherwise = iterateOver readString lst stopSign
+    | isLetter h = iterateOver readString lst stopSign
+    | otherwise = ([],lst)
 
 iterateOver :: (t -> String -> (Token,String)) -> t -> Char -> ([Token],String)
 iterateOver function lst stopSign
@@ -97,16 +98,18 @@ readSup lst _ = readSupOrSub lst Sup
 readSub :: String -> String -> (Token,String)
 readSub lst _ = readSupOrSub lst Sub
 
-readSupOrSub :: String -> ([Token] -> Token) -> (Token,String)
-readSupOrSub [] _ = (End,[])
 readSupOrSub lst@(h:t) type'
-    | h == '{' = runTokenize t '}' type'
-    | h == '\\' = runTokenize lst ' ' type'
-    | otherwise =
-        let tmp = tokenize [h] ' '
-        in (type' (fst tmp),t)
+    | h == '{' = runTokenizer t '}' [] type'
+    | h == '\\' = runTokenizer lst ' ' [] type'
+    | otherwise = runTokenizer [h] ' ' t type'
 
-runTokenize :: String -> Char -> ([Token] -> Token) -> (Token,String)
-runTokenize lst stopSign type' =
+runTokenizer :: String -> Char -> String -> ([Token] -> Token) -> (Token,String)
+runTokenizer lst stopSign [] type' =
     let tmp = tokenize lst stopSign
     in (type' (fst tmp),snd tmp)
+runTokenizer lst stopSign returnList type' =
+    let tmp = tokenize lst stopSign
+    in (type' (fst tmp),returnList)
+
+operators :: String
+operators = "+-*/=!():<>|[]&\n"

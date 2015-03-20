@@ -1,4 +1,4 @@
-module Scanner.Definitions where
+module Latex2MathMLConverter.Utils.Definitions where
 
 -- in ComplexCommand and InlineCommand first [Token] is for parameters, second for actual command body
 
@@ -11,7 +11,8 @@ data Token = CommandBodyless String |
     Operator Char |
     MyNum String |
     End |
-    ComplexEnd
+    ComplexEnd |
+    Error
     deriving (Show,Eq)
 
 -- data Bodylesstype = Greek GreekSymbol Bool | Math | Relation | Binary | SetAndLogic deriving (Show,Eq)
