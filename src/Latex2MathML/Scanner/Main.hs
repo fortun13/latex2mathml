@@ -1,9 +1,9 @@
-module Latex2MathMLConverter.Scanner.Main (scan) where
+module Latex2MathML.Scanner.Main (scan) where
 
 import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
-import Latex2MathMLConverter.Utils.Definitions
+import Latex2MathML.Utils.Definitions
 
 scan :: String -> ([Token],String)
 scan lst = tokenize (prepareInput lst "") '\n'
@@ -41,7 +41,10 @@ iterateOver function lst stopSign
 readString :: String -> String -> (Token,String)
 readString [] [] = (End,[])
 readString [] buffer = (MyStr $ reverse buffer,[])
+readString (h:t) ""
+    | h `elem` "ABEZHIKMNOoTX" = (CommandBodyless [h],t)
 readString lst@(h:t) buffer
+    | h `elem` "ABEZHIKMNOoTX" = (MyStr $ reverse buffer,lst)
     | isLetter h = readString t (h:buffer)
     | otherwise = (MyStr $ reverse buffer,lst)
 

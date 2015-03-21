@@ -1,6 +1,6 @@
-module Latex2MathMLConverter.Parser.Main (parse) where
+module Latex2MathML.Parser.Main (parse) where
 
-import Latex2MathMLConverter.Utils.Definitions
+import Latex2MathML.Utils.Definitions
 
 parse :: [Token] -> [Token]
 parse [] = []
@@ -16,4 +16,6 @@ checkCorrectness (InlineCommand name parameters bodies) = name `elem` ["frac"]
 checkCorrectness (ComplexCommand name parameters body) = name `elem` ["matrix"]
     && all checkCorrectness parameters
     && all checkCorrectness body
+checkCorrectness (Sub body) = all checkCorrectness body
+checkCorrectness (Sup body) = all checkCorrectness body
 checkCorrectness _ = True

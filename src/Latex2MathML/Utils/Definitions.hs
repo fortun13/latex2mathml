@@ -1,4 +1,4 @@
-module Latex2MathMLConverter.Utils.Definitions where
+module Latex2MathML.Utils.Definitions where
 
 -- in ComplexCommand and InlineCommand first [Token] is for parameters, second for actual command body
 

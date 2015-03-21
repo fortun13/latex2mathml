@@ -1,8 +1,8 @@
-module Latex2MathMLConverter.Scanner.Tests (tests) where
+module Latex2MathML.Scanner.Tests (tests) where
 
 import Test.HUnit
-import Latex2MathMLConverter.Utils.Definitions
-import Latex2MathMLConverter.Scanner.Main
+import Latex2MathML.Utils.Definitions
+import Latex2MathML.Scanner.Main
 
 tests :: Test
 tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8]
