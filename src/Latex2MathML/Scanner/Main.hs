@@ -3,7 +3,9 @@ module Latex2MathML.Scanner.Main (scan) where
 import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
+import Data.Set (member)
 import Latex2MathML.Utils.Definitions
+import Latex2MathML.Parser.Main (bodyless)
 
 scan :: String -> ([Token],String)
 scan lst = tokenize (prepareInput lst "") '\n'
@@ -29,6 +31,8 @@ tokenize lst@(h:t) stopSign
         let tmp = tokenize t stopSign
         in (Operator h : fst tmp,snd tmp)
     | isLetter h = iterateOver readString lst stopSign
+    -- TODO i am not sure it should be here (need more test cases)
+    | h == '}' || h == '{' = tokenize t stopSign
     | otherwise = ([],lst)
 
 iterateOver :: (t -> String -> (Token,String)) -> t -> Char -> ([Token],String)
@@ -67,8 +71,10 @@ readCommand (h:t) ""
     | otherwise = readCommand t [h]
 readCommand lst@(h:t) buffer
     | null lst || (h `elem` " }()_^\\" && buffer /= "carf") = (CommandBodyless $ reverse buffer,lst)
-    | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
-    | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
+    | (h == '{' || h == '[') && ("nigeb" == buffer) = readComplexCommand lst
+    | h == '{' && ("dne" == buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
+    --TODO it's not very elegant (and i still am not convinced it should be used here)
+    | h == '{' && member (reverse buffer) bodyless = (CommandBodyless $ reverse buffer,t)
     | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
     | buffer == "carf" =
         if isDigit h then

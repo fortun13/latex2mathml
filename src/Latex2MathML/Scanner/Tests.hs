@@ -5,7 +5,7 @@ import Latex2MathML.Utils.Definitions
 import Latex2MathML.Scanner.Main
 
 tests :: Test
-tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8]
+tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8, TestLabel "test9" test9, TestLabel "test10" test10, TestLabel "test11" test11, TestLabel "test12" test12, TestLabel "test13" test13, TestLabel "test14" test14]
 
 test1 :: Test
 test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
@@ -74,5 +74,5 @@ test13 = TestCase (assertEqual "Sum symbol, without arguments: \\sum{12}{34}"
 
 test14 :: Test
 test14 = TestCase (assertEqual "Sum symbol, with arguments: \\sum_{12}^{34}"
-        ([InlineCommand "sum" [] [Sub [MyNum "12"],Sup [MyNum "34"]]],"")
+        ([CommandBodyless "sum",Sub [MyNum "12"],Sup [MyNum "34"]],"")
         (scan "\\sum_{12}^{34}"))

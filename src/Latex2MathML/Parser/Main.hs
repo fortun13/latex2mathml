@@ -1,4 +1,4 @@
-module Latex2MathML.Parser.Main (parse) where
+module Latex2MathML.Parser.Main (parse,bodyless) where
 
 import Latex2MathML.Utils.Definitions
 import Data.Set (fromList,member,Set)
