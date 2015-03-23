@@ -46,6 +46,7 @@ readString (h:t) ""
 readString lst@(h:t) buffer
     | h `elem` "ABEZHIKMNOoTX" = (MyStr $ reverse buffer,lst)
     | isLetter h = readString t (h:buffer)
+    | h == ' ' = readString t buffer
     | otherwise = (MyStr $ reverse buffer,lst)
 
 readNumber :: String -> String -> (Token,String)
@@ -53,20 +54,31 @@ readNumber [] [] = (End,[])
 readNumber [] buffer = (MyNum $ reverse buffer,[])
 readNumber lst@(h:t) buffer
     | isDigit h || h == '.' = readNumber t (h:buffer)
+    | h == ' ' = readNumber t buffer
     | otherwise = (MyNum $ reverse buffer,lst)
 
 readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
 readCommand [] buffer = (CommandBodyless $ reverse buffer,[])
 readCommand (h:t) ""
-    | h `elem` "{[" = (Operator h,t)
+    | h `elem` "{}[]()" = (Operator h,t)
     | h == '\\' = (Operator '\n',t)
+    | h == ' ' = (Operator 's',t)
     | otherwise = readCommand t [h]
 readCommand lst@(h:t) buffer
-    | null lst || (h `elem` " }()_^\\" && buffer /= "") = (CommandBodyless $ reverse buffer,lst)
+    | null lst || (h `elem` " }()_^\\" && buffer /= "carf") = (CommandBodyless $ reverse buffer,lst)
     | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
     | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
     | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
+    | buffer == "carf" =
+        if isDigit h then
+            let (h1:h2:t2) = lst
+            in (InlineCommand (reverse buffer) [] [[MyNum [h1]],[MyNum [h2]]],t2)
+        else if h == ' ' then
+            let (h1:h2:h3:h4:t2) = lst
+            in (InlineCommand (reverse buffer) [] [[MyNum [h2]],[MyNum [h4]]],t2)
+        -- if frac has body we should never be here, because h == '{' will catch it earlier
+        else (End,[])
     | otherwise = readCommand t (h:buffer)
 
 readCommandBody :: String -> ([[Token]],String)

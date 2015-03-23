@@ -15,7 +15,7 @@ main = do
     --putStrLn $ show  $ parse $ fst $ scan "2+    2 \\frac{1}{2} \\begin{matrix} 2 & \\alpha \\\\ 3 & 4 \\end{matrix} + 2"
     --putStrLn (show (scan "2+    2 \\frac{1}{2} \\begin{matrix} 2 & \\alpha \\\\ A & B \\end{matrix} + 2"))
 
-    print $ scan "\\( 12             13 \\)\\"
+    print $ scan "\\( 12             13 \\)\\\\"
     -- Wykrywa liczby jako osobne elemnty - w LaTeX'u spacje są w tym przypadku pomijane, powinien wypisać 1213.
     -- trzeba to będzie uwzględnić przy generowaniu, jeśli nie pojawi się wymuszona spacja (\(spacja)) to można wypisać liczby razem
 
