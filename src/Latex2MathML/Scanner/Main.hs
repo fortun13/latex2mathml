@@ -58,12 +58,15 @@ readNumber lst@(h:t) buffer
 readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
 readCommand [] buffer = (CommandBodyless $ reverse buffer,[])
+readCommand (h:t) ""
+    | h `elem` "{[" = (Operator h,t)
+    | h == '\\' = (Operator '\n',t)
+    | otherwise = readCommand t [h]
 readCommand lst@(h:t) buffer
     | null lst || (h `elem` " }()_^\\" && buffer /= "") = (CommandBodyless $ reverse buffer,lst)
     | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
     | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
     | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
-    | h == '\\' = (Operator '\n',t)
     | otherwise = readCommand t (h:buffer)
 
 readCommandBody :: String -> ([[Token]],String)
@@ -115,4 +118,4 @@ runTokenizer lst stopSign returnList type' =
     in (type' (fst tmp),returnList)
 
 operators :: String
-operators = "+-*/=!():<>|[]&\n"
+operators = "+-*/=!():<>|[]&\n,.'"
