@@ -46,3 +46,33 @@ test8 :: Test
 test8 = TestCase (assertEqual "Complex Command testing; expression: \\begin{matrix} \\alpha & 2 \\\\ 3 & 4 \\end{matrix}"
     ([ComplexCommand "matrix" [] [CommandBodyless "alpha",Operator '&',MyNum "2",Operator '\n',MyNum "3",Operator '&',MyNum "4"]],"")
     (scan "\\begin{matrix} \\alpha & 2 \\\\ 3 & 4 \\end{matrix}"))
+
+test9 :: Test
+test9 = TestCase (assertEqual "Number string with unncessary spaces: 12             13 "
+    ([MyNum "1213"],"")
+    (scan "12             13"))
+
+test10 :: Test
+test10 = TestCase (assertEqual "Number string with single space: 12 \\ 13"
+        ([MyNum "12",Operator 's',MyNum "13"],"")
+        (scan "12 \\ 13"))
+
+test11 :: Test
+test11 = TestCase (assertEqual "Fraction without brackets 1: \\frac 1 2"
+        ([InlineCommand "frac" [] [[MyNum "1"],[MyNum "2"]]],"")
+        (scan "\\frac 1 2"))
+
+test12 :: Test
+test12 = TestCase (assertEqual "Fraction without brackets 2: \\frac12"
+        ([InlineCommand "frac" [] [[MyNum "1"],[MyNum "2"]]],"")
+        (scan "\\frac12"))
+
+test13 :: Test
+test13 = TestCase (assertEqual "Sum symbol, without arguments: \\sum{12}{34}"
+        ([CommandBodyless "sum",MyNum "12",MyNum "34"],"")
+        (scan "\\sum{12}{34}"))
+
+test14 :: Test
+test14 = TestCase (assertEqual "Sum symbol, with arguments: \\sum_{12}^{34}"
+        ([InlineCommand "sum" [] [Sub [MyNum "12"],Sup [MyNum "34"]]],"")
+        (scan "\\sum_{12}^{34}"))
