@@ -43,6 +43,6 @@ test7 = TestCase (assertEqual "Square bracket testing; expression: [] \\sqrt[n]{
     (scan "[] \\sqrt[n]{1}{2}"))
 
 test8 :: Test
-test8 = TestCase (assertEqual "Complex Command testing"
+test8 = TestCase (assertEqual "Complex Command testing; expression: \\begin{matrix} \\alpha & 2 \\\\ 3 & 4 \\end{matrix}"
     ([ComplexCommand "matrix" [] [CommandBodyless "alpha",Operator '&',MyNum "2",Operator '\n',MyNum "3",Operator '&',MyNum "4"]],"")
     (scan "\\begin{matrix} \\alpha & 2 \\\\ 3 & 4 \\end{matrix}"))

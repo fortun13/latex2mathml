@@ -25,7 +25,7 @@ tokenize lst@(h:t) stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
     | isDigit h = iterateOver readNumber lst stopSign
-    | elem h operators =
+    | h `elem` operators =
         let tmp = tokenize t stopSign
         in (Operator h : fst tmp,snd tmp)
     | isLetter h = iterateOver readString lst stopSign
@@ -59,7 +59,7 @@ readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
 readCommand [] buffer = (CommandBodyless $ reverse buffer,[])
 readCommand lst@(h:t) buffer
-    | null lst || h == ' ' = (CommandBodyless $ reverse buffer,lst)
+    | null lst || (h `elem` " }()_^\\" && buffer /= "") = (CommandBodyless $ reverse buffer,lst)
     | (h == '{' || h == '[') && ("begin" == reverse buffer) = readComplexCommand lst
     | h == '{' && ("end" == reverse buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
     | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
