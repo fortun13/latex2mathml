@@ -21,6 +21,7 @@ prepareInput lst@(h:t) buffer
 tokenize :: String -> Char -> ([Token],String)
 tokenize [] _ = ([],[])
 tokenize lst@(h:t) stopSign
+    | h == '\n' && t /= [] = scan t
     | h == stopSign = ([],t)
     | h == '\\' = iterateOver readCommand t stopSign
     | h == ' ' || h == '\n' = tokenize t stopSign
@@ -85,6 +86,8 @@ readCommand lst@(h:t) buffer
             in (InlineCommand (reverse buffer) [] [[MyNum [h2]],[MyNum [h4]]],t2)
         -- if frac has body we should never be here, because h == '{' will catch it earlier
         else (End,[])
+    | h == '\n' = readCommand t buffer
+    | h `elem` operators = (CommandBodyless $ reverse buffer,lst)
     | otherwise = readCommand t (h:buffer)
 
 readCommandBody :: String -> ([[Token]],String)

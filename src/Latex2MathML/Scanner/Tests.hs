@@ -5,7 +5,10 @@ import Latex2MathML.Utils.Definitions
 import Latex2MathML.Scanner.Main
 
 tests :: Test
-tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8, TestLabel "test9" test9, TestLabel "test10" test10, TestLabel "test11" test11, TestLabel "test12" test12, TestLabel "test13" test13, TestLabel "test14" test14]
+tests = TestList [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3, TestLabel "test4" test4, TestLabel "test5" test5, TestLabel "test6" test6, TestLabel "test7" test7, TestLabel "test8" test8, TestLabel "test9" test9, TestLabel "test10" test10, TestLabel "test11" test11, TestLabel "test12" test12, TestLabel "test13" test13, TestLabel "test14" test14, TestLabel "test15" test15, TestLabel "test16" test16,TestLabel "test17" test17,TestLabel "test18" test18,TestLabel "test19" test19]
+
+--generateTestList 0 = [(,)]
+--generateTestList n = ("test"++n, )
 
 test1 :: Test
 test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
@@ -76,3 +79,28 @@ test14 :: Test
 test14 = TestCase (assertEqual "Sum symbol, with arguments: \\sum_{12}^{34}"
         ([CommandBodyless "sum",Sub [MyNum "12"],Sup [MyNum "34"]],"")
         (scan "\\sum_{12}^{34}"))
+
+test15 :: Test
+test15 = TestCase (assertEqual "wikipedia example: \\forall x \\in X, \\quad \n \\exists y \\leq \\epsilon"
+    ([CommandBodyless "forall",MyStr "x",CommandBodyless "in",CommandBodyless "X",Operator ',',CommandBodyless "quad",CommandBodyless "exists",MyStr "y",CommandBodyless "leq",CommandBodyless "epsilon"],"")
+    (scan "\\forall x \\in X, \\quad \n \\exists y \\leq \\epsilon"))
+
+test16 :: Test
+test16 = TestCase (assertEqual "wikipedia example (greek letters): \\alpha, \\Alpha, \\beta, \\Beta, \\gamma, \\Gamma, \\pi, \\Pi, \\phi, \\varphi, \\Phi"
+    ([CommandBodyless "alpha",Operator ',',CommandBodyless "Alpha",Operator ',',CommandBodyless "beta",Operator ',',CommandBodyless "Beta",Operator ',',CommandBodyless "gamma",Operator ',',CommandBodyless "Gamma",Operator ',',CommandBodyless "pi",Operator ',',CommandBodyless "Pi",Operator ',',CommandBodyless "phi",Operator ',',CommandBodyless "varphi",Operator ',',CommandBodyless "Phi"],"")
+    (scan "\\alpha, \\Alpha, \\beta, \\Beta, \\gamma, \\Gamma, \\pi, \\Pi, \\phi, \\varphi, \\Phi"))
+
+test17 :: Test
+test17 = TestCase (assertEqual "wikipedia example (operators 1): \\cos (2\\theta) = \\cos^2 \\theta - \\sin^2 \\theta"
+    ([CommandBodyless "cos",Operator '(',MyNum "2",CommandBodyless "theta",Operator ')',Operator '=',CommandBodyless "cos",Sup [MyNum "2"],CommandBodyless "theta",Operator '-',CommandBodyless "sin",Sup [MyNum "2"],CommandBodyless "theta"],"")
+    (scan "\\cos (2\\theta) = \\cos^2 \\theta - \\sin^2 \\theta"))
+
+test18 :: Test
+test18 = TestCase (assertEqual "wikipedia example (operators 2): \\lim_{x \\to \\infty} \\exp(-x) = 0"
+    ([CommandBodyless "lim",Sub [MyStr "x", CommandBodyless "to", CommandBodyless "infty"],CommandBodyless "exp", Operator '(',Operator '-',MyStr "x",Operator ')',Operator '=',MyNum "0"],"")
+    (scan "\\lim_{x \\to \\infty} \\exp(-x) = 0"))
+
+test19 :: Test
+test19 = TestCase (assertEqual "wikipedia example: f(n) = n^5 + 4n^2 + 2 |_{n=17}"
+    ([MyStr "f",Operator '(',MyStr "n",Operator ')',Operator '=',MyStr "n",Sup [MyNum "5"],Operator '+',MyNum "4",MyStr "n",Sup [MyNum "2"],Operator '+',MyNum "2",Operator '|',Sub [MyStr "n",Operator '=',MyNum "17"]],"")
+    (scan "f(n) = n^5 + 4n^2 + 2 |_{n=17}"))
