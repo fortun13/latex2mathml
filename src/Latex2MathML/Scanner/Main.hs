@@ -28,9 +28,9 @@ tokenize lst@(h:t) stopSign
     | h == '^' = iterateOver readSup t stopSign
     | h == '_' = iterateOver readSub t stopSign
     | isDigit h = iterateOver readNumber lst stopSign
-    | h `elem` operators =
-        let tmp = tokenize t stopSign
-        in (Operator h : fst tmp,snd tmp)
+    | h `elem` operators = iterateOver readOperator lst stopSign
+--        let tmp = tokenize t stopSign
+--        in (Operator [h] : fst tmp,snd tmp)
     | isLetter h = iterateOver readString lst stopSign
     -- TODO i am not sure it should be here (need more test cases)
     | h == '}' || h == '{' = tokenize t stopSign
@@ -42,6 +42,16 @@ iterateOver function lst stopSign
     | otherwise = (fst tmp : fst tmp2,snd tmp2)
     where tmp = function lst ""
           tmp2 = tokenize (snd tmp) stopSign
+
+readOperator :: String -> String -> (Token,String)
+readOperator [] [] = (End,[])
+readOperator [] buffer = (Operator $ reverse buffer,[])
+readOperator (h:t) ""
+    | h == '\'' = readOperator t [h]
+    | otherwise = (Operator [h],t)
+readOperator lst@(h:t) buffer
+    | h == '\'' = readOperator t (h:buffer)
+    | otherwise = (Operator buffer,lst)
 
 readString :: String -> String -> (Token,String)
 readString [] [] = (End,[])
@@ -66,9 +76,9 @@ readCommand :: String -> String -> (Token,String)
 readCommand [] [] = (End,[])
 readCommand [] buffer = (CommandBodyless $ reverse buffer,[])
 readCommand (h:t) ""
-    | h `elem` "{}[]()" = (Operator h,t)
-    | h == '\\' = (Operator '\n',t)
-    | h == ' ' = (Operator 's',t)
+    | h `elem` "{}[]()" = (Operator [h],t)
+    | h == '\\' = (Operator "\n",t)
+    | h == ' ' = (Operator "s",t)
     | otherwise = readCommand t [h]
 readCommand lst@(h:t) buffer
     | null lst || (h `elem` " }()_^\\" && buffer /= "carf") = (CommandBodyless $ reverse buffer,lst)

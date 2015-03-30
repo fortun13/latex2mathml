@@ -8,7 +8,7 @@ data Token = CommandBodyless String |
     MyStr String |
     Sub [Token] |
     Sup [Token] |
-    Operator Char |
+    Operator String |
     MyNum String |
     End |
     ComplexEnd |
