@@ -204,8 +204,8 @@ test22 = TestCase (assertEqual "example: x = a_0 + \\cfrac{1}{a_1 + \\cfrac{1}{a
     (scan "x = a_0 + \\cfrac{1}{a_1 + \\cfrac{1}{a_2 + \\cfrac{1}{a_3 + \\cfrac{1}{a_4}}}}"))
 
 test23 :: Test
-test23 = TestCase (assertEqual "example: \frac{\begin{array}[b]{r}\\left(x_1 x_2 \right) \\ \times \\left( x'_1 x'_2 \right) \\end{array}}{\\left( y_1y_2y_3y_4 \right)}"
-    ([InlineCommand "frac" [] [[ArrayCommand "array" [MyStr "b"] [MyStr "r"] [CommandBodyless "left",Operator "(",MyStr "x",Sub [MyNum "1"],MyStr "x",Sub [MyNum "2"],CommandBodyless "right",Operator ")",Operator "s",CommandBodyless "times",CommandBodyless "left",Operator "(",MyStr "x",Operator "'",Sub [MyNum "1"],MyStr "x",Operator "'",Sub [MyNum "2"],CommandBodyless "right",Operator ")"]],[CommandBodyless "left",Operator "(",MyStr "y",Sub [MyNum "1"],MyStr "y",Sub [MyNum "2"],MyStr "y",Sub [MyNum "3"],MyStr "y",Sub [MyNum "4"],CommandBodyless "right",Operator ")"]]],"")
+test23 = TestCase (assertEqual "example: \\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\\\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"
+    ([InlineCommand "frac" [] [[ComplexCommand "array" [MyStr "b", MyStr "r"] [CommandBodyless "left",Operator "(",MyStr "x",Sub [MyNum "1"],MyStr "x",Sub [MyNum "2"],CommandBodyless "right",Operator ")",Operator "s",CommandBodyless "times",CommandBodyless "left",Operator "(",MyStr "x",Operator "'",Sub [MyNum "1"],MyStr "x",Operator "'",Sub [MyNum "2"],CommandBodyless "right",Operator ")"]],[CommandBodyless "left",Operator "(",MyStr "y",Sub [MyNum "1"],MyStr "y",Sub [MyNum "2"],MyStr "y",Sub [MyNum "3"],MyStr "y",Sub [MyNum "4"],CommandBodyless "right",Operator ")"]]],"")
     (scan "\\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"))
 
 test24 :: Test
@@ -240,6 +240,6 @@ test29 = TestCase (assertEqual "M = \\begin{matrix} \\frac{5}{6} & \\frac{1}{6} 
 
 test30 :: Test
 test30 = TestCase (assertEqual "example: f(n) = \\left\\{ \\begin{array}{l l} n/2 & \\quad \\text{if $n$ is even} \\\\ -(n+1)/2 & \\quad \\text{if $n$ is odd} \\end{array} \\right"
-    ([MyStr "f",Operator "(",MyStr "n",Operator ")",Operator "=",CommandBodyless "left",Operator "{",ArrayCommand "array" [] [MyStr "ll"] [MyStr "n",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "niseven"]],Operator "\n",Operator "-",Operator "(",MyStr "n",Operator "+",MyNum "1",Operator ")",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "nis",CommandBodyless "o",MyStr "dd"]]],CommandBodyless "right"],"")
+    ([MyStr "f",Operator "(",MyStr "n",Operator ")",Operator "=",CommandBodyless "left",Operator "{",ComplexCommand "array" [MyStr "ll"] [MyStr "n",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "niseven"]],Operator "\n",Operator "-",Operator "(",MyStr "n",Operator "+",MyNum "1",Operator ")",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "nis",CommandBodyless "o",MyStr "dd"]]],CommandBodyless "right"],"")
     (scan "f(n) = \\left\\{ \\begin{array}[]{l l} n/2 & \\quad \\text{if \\ n is even} \\\\ -(n+1)/2 & \\quad \\text{if \\ n is odd} \\end{array} \\right"))
     -- array has parameters for column adjustment in braces, not square brackets, thus program cannot match pattern

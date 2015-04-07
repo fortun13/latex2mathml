@@ -5,7 +5,6 @@ import Data.List (elemIndex)
 import Data.Maybe (fromJust)
 import Data.Set (member)
 import Latex2MathML.Utils.Definitions
-import Latex2MathML.Parser.Main (bodyless)
 
 scan :: String -> ([Token],String)
 scan lst = tokenize (prepareInput lst "") '\n'
@@ -84,8 +83,6 @@ readCommand lst@(h:t) buffer
     | null lst || (h `elem` " }()_^\\" && buffer /= "carf") = (CommandBodyless $ reverse buffer,lst)
     | (h == '{' || h == '[') && ("nigeb" == buffer) = readComplexCommand lst
     | h == '{' && ("dne" == buffer) = (ComplexEnd,snd $ splitAt (fromJust (elemIndex '}' lst)+1) lst)
-    --TODO it's not very elegant (and i still am not convinced it should be used here)
-    | h == '{' && member (reverse buffer) bodyless = (CommandBodyless $ reverse buffer,t)
     | h == '{' || h == '[' = readInlineCommand (reverse buffer) lst
     | buffer == "carf" =
         if isDigit h then
@@ -121,10 +118,25 @@ readComplexCommand :: String -> (Token,String)
 readComplexCommand [] = (End,[])
 readComplexCommand lst
     | isComplexCommand commName =
-        let par = readParameters rest
+        let par = readComplexParameters rest
             tmp = tokenize (snd par) '}'
         in (ComplexCommand commName (fst par) (fst tmp),snd tmp)
-    where ([[MyStr commName]],rest) = readCommandBody lst
+    where ([MyStr commName],rest) = readComplexCommandName lst
+
+readComplexCommandName :: String -> ([Token],String)
+readComplexCommandName lst = tokenize lst '}'
+
+readComplexParameters :: String -> ([Token],String)
+readComplexParameters (h:t)
+    | h == '[' =
+        let tmp = tokenize t ']'
+            tmp2 = readComplexParameters (snd tmp)
+        in (fst tmp ++ fst tmp2, snd tmp2)
+    | h == '{' =
+        let tmp = tokenize t '}'
+            tmp2 = readComplexParameters (snd tmp)
+        in (fst tmp ++ fst tmp2, snd tmp2)
+readComplexParameters lst = ([],lst)
 
 isComplexCommand :: String -> Bool
 isComplexCommand comm = comm `elem` ["matrix","table","array"]
@@ -149,4 +161,4 @@ runTokenizer lst stopSign returnList type' =
     in (type' (fst tmp),returnList)
 
 operators :: String
-operators = "+-*/=!():<>|[]&\n,.'"
+operators = "+-*/=!():<>|[]&\n,.'$"
