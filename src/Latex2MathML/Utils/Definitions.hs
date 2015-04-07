@@ -5,6 +5,7 @@ module Latex2MathML.Utils.Definitions where
 data Token = CommandBodyless String |
     InlineCommand String [Token] [[Token]] |
     ComplexCommand String [Token] [Token] |
+    ArrayCommand String [Token] [Token] [Token] |
     MyStr String |
     Sub [Token] |
     Sup [Token] |

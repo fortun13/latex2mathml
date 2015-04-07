@@ -205,7 +205,7 @@ test22 = TestCase (assertEqual "example: x = a_0 + \\cfrac{1}{a_1 + \\cfrac{1}{a
 
 test23 :: Test
 test23 = TestCase (assertEqual "example: \frac{\begin{array}[b]{r}\\left(x_1 x_2 \right) \\ \times \\left( x'_1 x'_2 \right) \\end{array}}{\\left( y_1y_2y_3y_4 \right)}"
-    ([InlineCommand "frac" [] [[ComplexCommand "array" [MyStr "b"] [MyStr "r"],CommandBodyless "left",Operator "(",MyStr "x",Sub [MyNum "1"],MyStr "x",Sub [MyNum "2"],CommandBodyless "right",Operator ")",Operator "s",CommandBodyless "times",CommandBodyless "left",Operator "(",MyStr "x",Operator "'",Sub [MyNum "1"],MyStr "x",Operator "'",Sub [MyNum "2"],CommandBodyless "right",Operator ")"],[CommandBodyless "left",Operator "(",MyStr "y",Sub [MyNum "1"],MyStr "y",Sub [MyNum "2"],MyStr "y",Sub [MyNum "3"],MyStr "y",Sub [MyNum "4"],CommandBodyless "right",Operator ")"]]],"")
+    ([InlineCommand "frac" [] [[ArrayCommand "array" [MyStr "b"] [MyStr "r"] [CommandBodyless "left",Operator "(",MyStr "x",Sub [MyNum "1"],MyStr "x",Sub [MyNum "2"],CommandBodyless "right",Operator ")",Operator "s",CommandBodyless "times",CommandBodyless "left",Operator "(",MyStr "x",Operator "'",Sub [MyNum "1"],MyStr "x",Operator "'",Sub [MyNum "2"],CommandBodyless "right",Operator ")"]],[CommandBodyless "left",Operator "(",MyStr "y",Sub [MyNum "1"],MyStr "y",Sub [MyNum "2"],MyStr "y",Sub [MyNum "3"],MyStr "y",Sub [MyNum "4"],CommandBodyless "right",Operator ")"]]],"")
     (scan "\\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"))
 
 test24 :: Test
@@ -229,7 +229,7 @@ test27 = TestCase (assertEqual "example: \\begin{matrix} -1 & 3 \\\\ 2 & -4 \\en
     (scan "\\begin{matrix} -1 & 3 \\\\ 2 & -4 \\end{matrix} = \\begin{matrix}[r] -1 & 3 \\\\ 2 & -4 \\end{matrix}"))
 
 test28 :: Test
-test28 = TestCase (assertEqual "example: A_{m,n} = \\begin{pmatrix} a_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\ a_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\ \\vdots  & \\vdots  & \\ddots & \\vdots  \\\\ a_{m,1} & a_{m,2} \\cdots & a_{m,n} \\end{pmatrix}"
+test28 = TestCase (assertEqual "example: A_{m,n} = \\begin{matrix} a_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\ a_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\ \\vdots  & \\vdots  & \\ddots & \\vdots  \\\\ a_{m,1} & a_{m,2} \\cdots & a_{m,n} \\end{matrix}"
     ([CommandBodyless "A",Sub [MyStr "m",Operator ",",MyStr "n"],Operator "=",ComplexCommand "matrix" [] [MyStr "a",Sub [MyNum "1",Operator ",",MyNum "1"],Operator "&",MyStr "a",Sub [MyNum "1",Operator ",",MyNum "2"],Operator "&",CommandBodyless "cdots",Operator "&",MyStr "a",Sub [MyNum "1",Operator ",",MyStr "n"],Operator "\n",MyStr "a",Sub [MyNum "2",Operator ",",MyNum "1"],Operator "&",MyStr "a",Sub [MyNum "2",Operator ",",MyNum "2"],Operator "&",CommandBodyless "cdots",Operator "&",MyStr "a",Sub [MyNum "2",Operator ",",MyStr "n"],Operator "\n",CommandBodyless "vdots",Operator "&",CommandBodyless "vdots",Operator "&",CommandBodyless "ddots",Operator "&",CommandBodyless "vdots",Operator "\n",MyStr "a",Sub [MyStr "m",Operator ",",MyNum "1"],Operator "&",MyStr "a",Sub [MyStr "m",Operator ",",MyNum "2"],CommandBodyless "cdots",Operator "&",MyStr "a",Sub [MyStr "m",Operator ",",MyStr "n"]]],"")
     (scan "A_{m,n} = \\begin{matrix} a_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\ a_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\ \\vdots  & \\vdots  & \\ddots & \\vdots  \\\\ a_{m,1} & a_{m,2} \\cdots & a_{m,n} \\end{matrix}"))
 
@@ -240,6 +240,6 @@ test29 = TestCase (assertEqual "M = \\begin{matrix} \\frac{5}{6} & \\frac{1}{6} 
 
 test30 :: Test
 test30 = TestCase (assertEqual "example: f(n) = \\left\\{ \\begin{array}{l l} n/2 & \\quad \\text{if $n$ is even} \\\\ -(n+1)/2 & \\quad \\text{if $n$ is odd} \\end{array} \\right"
-    ([MyStr "f",Operator "(",MyStr "n",Operator ")",Operator "=",CommandBodyless "left",Operator "{",ComplexCommand "array" [MyStr "ll"] [MyStr "n",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "niseven"]],Operator "\n",Operator "-",Operator "(",MyStr "n",Operator "+",MyNum "1",Operator ")",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "nis",CommandBodyless "o",MyStr "dd"]]],CommandBodyless "right"],"")
-    (scan "f(n) = \\left\\{ \\begin{array}{l l} n/2 & \\quad \\text{if \\ n is even} \\\\ -(n+1)/2 & \\quad \\text{if \\ n is odd} \\end{array} \\right"))
+    ([MyStr "f",Operator "(",MyStr "n",Operator ")",Operator "=",CommandBodyless "left",Operator "{",ArrayCommand "array" [] [MyStr "ll"] [MyStr "n",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "niseven"]],Operator "\n",Operator "-",Operator "(",MyStr "n",Operator "+",MyNum "1",Operator ")",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "nis",CommandBodyless "o",MyStr "dd"]]],CommandBodyless "right"],"")
+    (scan "f(n) = \\left\\{ \\begin{array}[]{l l} n/2 & \\quad \\text{if \\ n is even} \\\\ -(n+1)/2 & \\quad \\text{if \\ n is odd} \\end{array} \\right"))
     -- array has parameters for column adjustment in braces, not square brackets, thus program cannot match pattern
