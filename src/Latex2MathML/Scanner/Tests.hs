@@ -17,7 +17,8 @@ tests = TestList [TestLabel "testGr1" testGr1, TestLabel "testGr2" testGr2, Test
                   TestLabel "test20" test20, TestLabel "test21" test21, TestLabel "test22" test22,
                   TestLabel "test23" test23, TestLabel "test24" test24, TestLabel "test25" test25,
                   TestLabel "test26" test26, TestLabel "test27" test27, TestLabel "test28" test28,
-                  TestLabel "test29" test29, TestLabel "test30" test30]
+                  TestLabel "test29" test29, TestLabel "test30" test30, TestLabel "testMath" testMath,
+                  TestLabel "testAcc" testAcc]
 
 --generateTestList 0 = [(,)]
 --generateTestList n = ("test"++n, )
@@ -93,6 +94,17 @@ testRel = TestCase (assertEqual "Relation symbols"
     (scan "\\parallel \\nparallel \\leq \\geq \\doteq \\asymp \\bowtie \\ll \\gg \\equiv \\vdash \\dashv \\subset \\supset \\approx \\in \\ni \\subseteq \\supseteq \\cong \\smile \\frown \\nsubseteq \\nsupseteq \\sqsubset \\sqsupset \\simeq \\models \\notin \\sim \\perp \\mid \\sqsubseteq \\sqsupseteq \\propto \\prec \\succ \\preceq \\succeq \\neq"))
 
 
+testMath :: Test
+testMath = TestCase (assertEqual "Test for Math symbols"
+    ([CommandBodyless "prod",CommandBodyless "sum",CommandBodyless "lim",CommandBodyless "int"],"")
+    (scan "\\prod \\sum \\lim \\int "))
+
+testAcc :: Test
+testAcc = TestCase (assertEqual "Test for Accent symbols"
+    ([CommandBodyless "hat",CommandBodyless "grave",CommandBodyless "bar",CommandBodyless "acute",CommandBodyless "mathring",CommandBodyless "check",CommandBodyless "dot",CommandBodyless "vec",CommandBodyless "breve",CommandBodyless "tilde",CommandBodyless "ddot",CommandBodyless "widehat",CommandBodyless "widetilde"],"")
+    (scan "\\hat \\grave \\bar \\acute \\mathring \\check \\dot \\vec \\breve \\tilde \\ddot \\widehat \\widetilde"))
+
+
 test1 :: Test
 test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
     ([MyStr "k",Sup [MyNum "2"]],"")
@@ -155,7 +167,7 @@ test12 = TestCase (assertEqual "Fraction without brackets 2: \\frac12"
 
 test13 :: Test
 test13 = TestCase (assertEqual "Sum symbol, without arguments: \\sum{12}{34}"
-        ([CommandBodyless "sum",MyNum "12",MyNum "34"],"")
+        ([InlineCommand "sum" [] [[MyNum "12"],[MyNum "34"]]],"")
         (scan "\\sum{12}{34}"))
 
 test14 :: Test
@@ -242,4 +254,3 @@ test30 :: Test
 test30 = TestCase (assertEqual "example: f(n) = \\left\\{ \\begin{array}{l l} n/2 & \\quad \\text{if $n$ is even} \\\\ -(n+1)/2 & \\quad \\text{if $n$ is odd} \\end{array} \\right"
     ([MyStr "f",Operator "(",MyStr "n",Operator ")",Operator "=",CommandBodyless "left",Operator "{",ComplexCommand "array" [MyStr "ll"] [MyStr "n",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "niseven"]],Operator "\n",Operator "-",Operator "(",MyStr "n",Operator "+",MyNum "1",Operator ")",Operator "/",MyNum "2",Operator "&",CommandBodyless "quad",InlineCommand "text" [] [[MyStr "if",Operator "s",MyStr "nis",CommandBodyless "o",MyStr "dd"]]],CommandBodyless "right"],"")
     (scan "f(n) = \\left\\{ \\begin{array}[]{l l} n/2 & \\quad \\text{if \\ n is even} \\\\ -(n+1)/2 & \\quad \\text{if \\ n is odd} \\end{array} \\right"))
-    -- array has parameters for column adjustment in braces, not square brackets, thus program cannot match pattern
