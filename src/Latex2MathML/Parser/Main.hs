@@ -10,15 +10,15 @@ parse (h:t)
     | otherwise = Error : t
 
 checkCorrectness :: Token -> Bool
-checkCorrectness (CommandBodyless cmd) = member cmd bodyless
-checkCorrectness (InlineCommand name parameters bodies) = member name inline
-    && all checkCorrectness parameters
-    && all (==True) (map (all checkCorrectness) bodies)
-checkCorrectness (ComplexCommand name parameters body) = member name complex
-    && all checkCorrectness parameters
-    && all checkCorrectness body
-checkCorrectness (Sub body) = all checkCorrectness body
-checkCorrectness (Sup body) = all checkCorrectness body
+--checkCorrectness (CommandBodyless cmd) = member cmd bodyless
+--checkCorrectness (InlineCommand name parameters bodies) = member name inline
+--    && all checkCorrectness parameters
+--    && all (==True) (map (all checkCorrectness) bodies)
+--checkCorrectness (ComplexCommand name parameters body) = member name complex
+--    && all checkCorrectness parameters
+--    && all checkCorrectness body
+--checkCorrectness (Sub body) = all checkCorrectness body
+--checkCorrectness (Sup body) = all checkCorrectness body
 checkCorrectness _ = True
 
 --TODO what about iint iiint etc.?
