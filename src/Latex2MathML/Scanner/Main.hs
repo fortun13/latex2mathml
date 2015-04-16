@@ -3,42 +3,40 @@ module Latex2MathML.Scanner.Main (scan) where
 import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
-import Data.Set (member)
+--import Data.Set (member)
 import Latex2MathML.Utils.Definitions
 
 scan :: String -> ([Token],String)
-scan lst = tokenize (prepareInput lst "")
+scan = tokenize
 
-prepareInput :: String -> String -> String
-prepareInput [] buffer = reverse buffer
-prepareInput lst@(h:t) buffer
-    | h == '%' = prepareInput (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst) buffer
---     | h == ' ' = prepareInput t buffer
-    | null t = reverse ('\n':h:buffer)
-    | otherwise = prepareInput t (h:buffer)
+--prepareInput :: String -> String -> String
+--prepareInput [] buffer = reverse buffer
+--prepareInput lst@(h:t) buffer
+--    | h == '%' = prepareInput (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst) buffer
+----     | h == ' ' = prepareInput t buffer
+--    | null t = reverse ('\n':h:buffer)
+--    | otherwise = prepareInput t (h:buffer)
 
 tokenize :: String -> ([Token],String)
 tokenize [] = ([],[])
 tokenize lst@(h:t)
+    | h == '%' = tokenize (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst)
     | h == '\n' && t /= [] = scan t
     | h == '\\' = iterateOver readCommand t
     | h == ' ' || h == '\n' = tokenize t
-    | h == '^' =
-        let tmp = tokenize t
-        in ([Sup] ++ fst tmp, snd tmp)
-    | h == '_' =
-        let tmp = tokenize t
-        in ([Sub] ++ fst tmp, snd tmp)
+    | h == '^' = addToken Sup t
+    | h == '_' = addToken Sub t
     | isDigit h = iterateOver readNumber lst
     | h `elem` operators = iterateOver readOperator lst
     | isLetter h = iterateOver readString lst
-    | h == '{' =
-        let tmp = tokenize t
-        in ([BodyBegin] ++ fst tmp, snd tmp)
-    | h == '}' =
-        let tmp = tokenize t
-        in ([BodyEnd] ++ fst tmp, snd tmp)
+    | h == '{' = addToken BodyBegin t
+    | h == '}' = addToken BodyEnd t
     | otherwise = ([],lst)
+
+addToken :: Token -> String -> ([Token],String)
+addToken type' lst =
+    let tmp = tokenize lst
+    in ([type'] ++ fst tmp, snd tmp)
 
 iterateOver :: (t -> String -> (Token,String)) -> t -> ([Token],String)
 iterateOver function lst = (fst tmp : fst tmp2,snd tmp2)
@@ -85,6 +83,9 @@ readCommand (h:t) ""
 readCommand lst@(h:t) buffer
     | isLetter h = readCommand t (h:buffer)
     | otherwise = (Command $ reverse buffer,lst)
+
+operators :: String
+operators = "+-*/=!():<>|[]&\n,.'$"
 
 --tokenize :: String -> Char -> ([Token],String)
 --tokenize [] _ = ([],[])
@@ -199,6 +200,3 @@ readCommand lst@(h:t) buffer
 --runTokenizer lst stopSign returnList type' =
 --    let tmp = tokenize lst stopSign
 --    in (type' (fst tmp),returnList)
-
-operators :: String
-operators = "+-*/=!():<>|[]&\n,.'$"
