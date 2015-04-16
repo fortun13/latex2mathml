@@ -1,2 +1,2 @@
 # latex2mathml
-Student project for compilators theory
+Student project for compilers theory
