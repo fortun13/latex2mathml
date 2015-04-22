@@ -29,8 +29,11 @@ data Token = Command String |
     Error
     deriving (Show,Eq)
 
---data ASTModel = BodylessCommand String |
---    InlineCommand String [Token] [[Token]] |
---    ComplexCommand String [Token] [Token] |
---    Operator String |
---
+data ASTModel = BodylessCommand String |
+   InlineCommand String [Token] [[Token]] |
+   ComplexCommand String [Token] [Token] |
+   ASTOperator String |
+   ASTSub [Token] |
+   ASTSup [Token] |
+   Variable Char |
+   MN String

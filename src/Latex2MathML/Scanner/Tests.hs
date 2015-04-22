@@ -108,8 +108,8 @@ test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
 
 test2 :: Test
 test2 = TestCase (assertEqual "Nested commands; expression: \\frac{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"
-    ([Command "frac", BodyBegin, MyNum "1",Command "frac", BodyBegin, Command "frac", BodyBegin, MyNum "2",Operator "+",MyNum "3",Operator "-",MyNum "4", BodyEnd,BodyBegin, MyNum "3",BodyEnd,BodyEnd, BodyBegin,MyNum "4",BodyEnd,BodyEnd,BodyBegin,MyNum "5",BodyEnd],"")
-    (scan "\\frac{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
+    ([MyStr "aaa", BodyBegin, MyNum "1",Command "frac", BodyBegin, Command "frac", BodyBegin, MyNum "2",Operator "+",MyNum "3",Operator "-",MyNum "4", BodyEnd,BodyBegin, MyNum "3",BodyEnd,BodyEnd, BodyBegin,MyNum "4",BodyEnd,BodyEnd,BodyBegin,MyNum "5",BodyEnd],"")
+    (scan "\\aaa{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
 
 test3 :: Test
 test3 = TestCase (assertEqual "Operators and Brackets; expression: =+*/!<>|:() ' '' ''' ''''"
@@ -151,24 +151,14 @@ test10 = TestCase (assertEqual "Number string with single space: 12 \\ 13"
         ([MyNum "12",Operator "s",MyNum "13"],"")
         (scan "12 \\ 13"))
 
---test11 :: Test
---test11 = TestCase (assertEqual "Fraction without brackets 1: \\frac 1 2"
---        ([Command "frac",MyNum "1",MyNum "2"],"")
---        (scan "\\frac 1 2"))
-
---test12 :: Test
---test12 = TestCase (assertEqual "Fraction without brackets 2: \\frac12"
---        ([Command "frac",MyNum "1",MyNum "2"],"")
---        (scan "\\frac12"))
-
 test11 :: Test
 test11 = TestCase (assertEqual "Fraction without brackets 1: \\frac 1 2"
-        ([Command "frac",MyNum "12"],"")
+        ([Command "frac",MyNum "1",MyNum "2"],"")
         (scan "\\frac 1 2"))
 
 test12 :: Test
 test12 = TestCase (assertEqual "Fraction without brackets 2: \\frac12"
-        ([Command "frac",MyNum "12"],"")
+        ([Command "frac",MyNum "1",MyNum "2"],"")
         (scan "\\frac12"))
 
 test13 :: Test
@@ -223,8 +213,8 @@ test22 = TestCase (assertEqual "example: x = a_0 + \\cfrac{1}{a_1 + \\cfrac{1}{a
 
 test23 :: Test
 test23 = TestCase (assertEqual "example: \\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\\\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"
-    ([Command "frac",BodyBegin,Command "begin",BodyBegin,MyStr "array",BodyEnd,Operator "[",MyStr "b",Operator "]",BodyBegin,MyStr "r",BodyEnd,Command "left",Operator "(",MyStr "x",Sub,MyNum "1",MyStr "x",Sub,MyNum "2",Command "right",Operator ")",Operator "s",Command "times",Command "left",Operator "(",MyStr "x",Operator "'",Sub,MyNum "1",MyStr "x",Operator "'",Sub,MyNum "2",Command "right",Operator ")",Command "end",BodyBegin,MyStr "array",BodyEnd,BodyEnd,BodyBegin,Command "left",Operator "(",MyStr "y",Sub,MyNum "1",MyStr "y",Sub,MyNum "2",MyStr "y",Sub,MyNum "3",MyStr "y",Sub,MyNum "4",Command "right",Operator ")",BodyEnd],"")
-    (scan "\\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"))
+    ([Command "frac",BodyBegin,Command "begin",BodyBegin,MyStr "array",BodyEnd,Operator "[",MyStr "b",Operator "]",BodyBegin,MyStr "r",BodyEnd,Command "left",Operator "(",MyStr "x",Sub,MyNum "1",MyStr "x",Sub,MyNum "2",Command "right",Operator ")",Operator "\n",Command "times",Command "left",Operator "(",MyStr "x",Operator "'",Sub,MyNum "1",MyStr "x",Operator "'",Sub,MyNum "2",Command "right",Operator ")",Command "end",BodyBegin,MyStr "array",BodyEnd,BodyEnd,BodyBegin,Command "left",Operator "(",MyStr "y",Sub,MyNum "1",MyStr "y",Sub,MyNum "2",MyStr "y",Sub,MyNum "3",MyStr "y",Sub,MyNum "4",Command "right",Operator ")",BodyEnd],"")
+    (scan "\\frac{\\begin{array}[b]{r}\\left(x_1 x_2 \\right) \\\\ \\times \\left( x'_1 x'_2 \\right) \\end{array}}{\\left( y_1y_2y_3y_4 \\right)}"))
 
 test24 :: Test
 test24 = TestCase (assertEqual "example: \\sqrt[n]{1+x+x^2+x^3+\\ldots}"

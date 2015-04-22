@@ -1,5 +1,7 @@
 module Latex2MathML.Scanner.Main (scan) where
 
+--TODO traktowanie pojedynczych spacji jako Operator "s"
+
 import Data.Char (isDigit,isLetter)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
