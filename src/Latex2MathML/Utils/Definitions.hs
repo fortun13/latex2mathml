@@ -15,13 +15,16 @@ data Token = Command String |
     deriving (Show,Eq)
 
 data ASTModel = BodylessCommand String |
-   InlineCommand String [Token] [[Token]] |
-   ComplexCommand String [Token] [Token] |
+   InlineCommand String [ASTModel] [[ASTModel]] |
+   ComplexCommand String [ASTModel] [ASTModel] |
    ASTOperator String |
-   ASTSub [Token] |
-   ASTSup [Token] |
+   ASTSub [ASTModel] |
+   ASTSup [ASTModel] |
    Variable Char |
-   MN String
+   MN String |
+   Empty |
+   ComplexEnd
+   deriving (Show,Eq)
 
 operators :: String
 operators = "+-*/=!():<>|[]&\n,.'$"
