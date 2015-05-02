@@ -85,6 +85,7 @@ readCommand [] buffer line = do
     cmd <- getCommand (reverse buffer) line
     return (cmd,[])
 readCommand (h:t) "" l
+    | h `elem` "|" = return (Command "doubleOr",t)
     | h `elem` "{}[]()" = return (Operator [h],t)
     | h == '\\' = return (Operator "\n",t)
     | h == ' ' = return (Operator "s",t)

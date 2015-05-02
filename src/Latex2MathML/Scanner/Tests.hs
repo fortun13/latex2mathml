@@ -62,10 +62,13 @@ testSet = TestCase (assertEqual "Set and logic symbols"
 
 testDel :: Test
 testDel = TestCase (assertEqual "Delimiter symbols"
-    (Right [Command "uparrow", Command "downarrow", Command "|", Operator "}", Command "Uparrow",
+    (Right [Command "uparrow", Command "downarrow", Operator "}", Command "doubleOr", Operator "|", Command "Uparrow",
     Command "Downarrow", Operator "/", Command "langle", Command "lceil", Command "lfloor",
     Command "backslash", Command "rangle", Command "rceil", Command "rfloor"])
-    (scan "\\uparrow \\downarrow \\| \\} \\Uparrow \\Downarrow / \\langle \\lceil \\lfloor \\backslash \\rangle \\rceil \\rfloor"))
+    (scan "\\uparrow \\downarrow \\} \\| | \\Uparrow \\Downarrow / \\langle \\lceil \\lfloor \\backslash \\rangle \\rceil \\rfloor"))
+-- \\| Command "doubleOr",
+-- Problems with recognizing command \| (rendered as ||)
+-- \\} - in this context it shouldn't it be a command?
 
 testBin :: Test
 testBin = TestCase (assertEqual "Binary symbols"
@@ -109,7 +112,7 @@ test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
 test2 :: Test
 test2 = TestCase (assertEqual "Nested commands; expression: \\frac{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"
     (Right [MyStr "aaa", BodyBegin, MyNum "1",Command "frac", BodyBegin, Command "frac", BodyBegin, MyNum "2",Operator "+",MyNum "3",Operator "-",MyNum "4", BodyEnd,BodyBegin, MyNum "3",BodyEnd,BodyEnd, BodyBegin,MyNum "4",BodyEnd,BodyEnd,BodyBegin,MyNum "5",BodyEnd])
-    (scan "\\aaa{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
+    (scan "aaa{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
 
 test3 :: Test
 test3 = TestCase (assertEqual "Operators and Brackets; expression: =+*/!<>|:() ' '' ''' ''''"
