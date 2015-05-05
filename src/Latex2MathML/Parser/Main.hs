@@ -2,6 +2,7 @@ module Latex2MathML.Parser.Main (parse) where
 
 import Latex2MathML.Utils.Definitions
 import Latex2MathML.Utils.Functions (throwError)
+import Data.Map ((!),member)
 
 parse :: [Token] -> Either String [ASTModel]
 parse lst = (parse' lst End) >>= (\x -> return $ fst x)
@@ -33,6 +34,7 @@ parseString (h:t) = [Variable h] ++ parseString t
 
 parseCommand :: String -> [Token] -> Either String (ASTModel,[Token])
 parseCommand [] _ = throwError "Empty Command name"
+parseCommand name [] = return (BodylessCommand name,[])
 parseCommand name lst@(h:t)
     | name == "begin" = readComplexCommand lst
     -- dropping 2 because it should be MyStr CommandName (i.e. array) and BodyEnd
@@ -44,6 +46,10 @@ parseCommand name lst@(h:t)
         par <- readParameters t
         body <- readCommandBody $ snd par
         return (InlineCommand name (fst par) (fst body),snd body)
+    | Data.Map.member name commandsArity = do
+        tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name []
+        return (fst tmp,snd tmp ++ (drop (commandsArity ! name) lst))
+--        let tmp = take (commandsArity ! name) t
     | otherwise = return (BodylessCommand name,lst)
 
 readParameters :: [Token] -> Either String ([ASTModel],[Token])
@@ -74,6 +80,33 @@ complexParametersHelper lst stop = do
     tmp <- parse' lst stop
     tmp2 <- readComplexParameters $ snd tmp
     return (fst tmp ++ fst tmp2,snd tmp2)
+
+readInlineWithoutBody :: [Token] -> String -> [[ASTModel]] -> Either String (ASTModel,[Token])
+readInlineWithoutBody [] name _ = throwError $ "Error at parsing command: " ++ name
+readInlineWithoutBody ((MyNum val) : t) name lst = general val t name lst (\y -> MN [y]) MyNum
+readInlineWithoutBody ((Operator val) : t) name lst = general val t name lst (\y -> ASTOperator [y]) Operator
+readInlineWithoutBody ((MyStr val) : t) name lst = general val t name lst Variable MyStr
+readInlineWithoutBody ((Command val) : t) name lst = do
+    tmp <- parseCommand val t
+    if ((fst tmp) == (BodylessCommand val))
+        then
+        if (1 == (commandsArity ! name - length lst))
+            then return (InlineCommand val [] (lst ++ [[fst tmp]]),t)
+            else readInlineWithoutBody t name (lst ++ [[fst tmp]])
+        else throwError $ "Cannot parse complicated command without braces: " ++ name
+
+general :: String -> [Token] -> String -> [[ASTModel]] -> (Char -> ASTModel) -> (String -> Token) -> Either String (ASTModel,[Token])
+general tokenValue remainingTokens name lst fun type'
+    | length tokenValue > neededLength = let
+        tmp = take neededLength tokenValue
+        in return (InlineCommand name [] (lst ++ makeOneElementBodies tmp fun),(type' (drop neededLength tokenValue) : remainingTokens))
+    | length tokenValue == neededLength = return (InlineCommand name [] (lst ++ makeOneElementBodies tokenValue fun),remainingTokens)
+    | otherwise = readInlineWithoutBody remainingTokens name (lst ++ (makeOneElementBodies tokenValue fun))
+    where neededLength = commandsArity ! name - length lst
+
+makeOneElementBodies :: String -> (Char -> ASTModel)  -> [[ASTModel]]
+makeOneElementBodies (h:[]) fun = [[fun h]]
+makeOneElementBodies (h:t) fun = [fun h] : (makeOneElementBodies t fun)
 
 readSup :: String -> [Token] -> Either String (ASTModel,[Token])
 readSup _ lst = readSupOrSub lst ASTSup

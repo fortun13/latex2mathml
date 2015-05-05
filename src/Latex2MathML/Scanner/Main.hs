@@ -38,7 +38,7 @@ tokenize lst@(h:t) num
     | isLetter h = iterateOver readString lst num
     | h == '{' = addToken BodyBegin t num
     | h == '}' = addToken BodyEnd t num
-    | otherwise = throwError $ "Character not matched: " ++ [h] ++ "before: " ++ take 20 t ++ "line: " ++ show num
+    | otherwise = throwError $ "Character not matched: " ++ [h] ++ " before: " ++ take 20 t ++ " line: " ++ show num
 
 addToken :: Token -> String -> Integer -> Either String ([Token],String,Integer)
 addToken type' lst num = (tokenize lst num) >>= (\x -> return ([type'] ++ fst' x,snd' x, thr' x))
