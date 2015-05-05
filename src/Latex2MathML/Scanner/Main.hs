@@ -82,7 +82,7 @@ readNumber lst@(h:t) buffer n
 readCommand :: String -> String -> Integer -> Either String (Token,String)
 readCommand [] [] _ = return (End,[])
 readCommand [] buffer line = do
-    cmd <- getCommand (reverse buffer) line
+    cmd <- getCommand [] (reverse buffer) line
     return (cmd,[])
 readCommand (h:t) "" l
     | h `elem` "|" = return (Command "doubleOr",t)
@@ -100,17 +100,27 @@ readCommand lst@(h:t) buffer line
                 else throwError $ "Unrecognized pattern: " ++ reverse (tmp:h:buffer)
     | isLetter h = readCommand t (h:buffer) line
     | otherwise = do
-        cmd <- getCommand (reverse buffer) line
+        cmd <- getCommand lst (reverse buffer) line
         return (cmd, lst)
 
 --TODO validate complex command name
-getCommand :: String -> Integer -> Either String Token
-getCommand "" line = throwError $ "No idea... line: " ++ show line
-getCommand name line
+getCommand :: String -> String -> Integer -> Either String Token
+getCommand _ "" line = throwError $ "No idea... line: " ++ show line
+getCommand lst name line
     | member name commands == True = return $ Command name
-    | name == "begin" || name == "end" = return $ Command name
+    | name == "begin" || name == "end" =
+        if readComplexCommandName lst "" == True
+        then return $ Command name
+        else throwError $ "Command not recognized around: " ++ name ++ show (take 20 lst) ++ " line: " ++ show line
     | otherwise = throwError $ "Command not recognized: " ++ name ++ " line: " ++ show line
 
+readComplexCommandName :: String -> String -> Bool
+readComplexCommandName [] _ = False
+readComplexCommandName (h:t) buffer
+    | h == '{' = readComplexCommandName t buffer
+    | h == '}' = member (reverse buffer) complex
+    | isLetter h = readComplexCommandName t (h : buffer)
+    | otherwise = False
 
 fst' :: (a,b,c) -> a
 fst' (x,_,_) = x
