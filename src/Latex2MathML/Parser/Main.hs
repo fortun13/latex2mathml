@@ -84,5 +84,7 @@ readSub _ lst = readSupOrSub lst ASTSub
 readSupOrSub :: [Token] -> ([ASTModel] -> ASTModel) -> Either String (ASTModel,[Token])
 readSupOrSub (BodyBegin:t) type' = parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
 readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (type' $ [fst x],snd x))
+readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyStr tl : t))
+readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyNum tl : t))
 readSupOrSub (h:t) type' = parse' [h] BodyEnd >>= (\x -> return (type' $ fst x,t))
 readSupOrSub lst type' = throwError $ "Error at parsing " ++ (show $ type' []) ++ " before" ++ (show $ take 10 lst)
