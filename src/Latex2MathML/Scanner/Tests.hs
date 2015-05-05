@@ -18,7 +18,7 @@ tests = TestList [TestLabel "testGr1" testGr1, TestLabel "testGr2" testGr2, Test
                   TestLabel "test23" test23, TestLabel "test24" test24, TestLabel "test25" test25,
                   TestLabel "test26" test26, TestLabel "test27" test27, TestLabel "test28" test28,
                   TestLabel "test29" test29, TestLabel "test30" test30, TestLabel "testMath" testMath,
-                  TestLabel "testAcc" testAcc, TestLabel "test31" test31]
+                  TestLabel "testAcc" testAcc, TestLabel "test31" test31, TestLabel "test32" test32]
 
 testGr1 :: Test
 testGr1 = TestCase (assertEqual "Greek symbols, part one"
@@ -62,10 +62,13 @@ testSet = TestCase (assertEqual "Set and logic symbols"
 
 testDel :: Test
 testDel = TestCase (assertEqual "Delimiter symbols"
-    (Right [Command "uparrow", Command "downarrow", Command "|", Operator "}", Command "Uparrow",
+    (Right [Command "uparrow", Command "downarrow", Operator "}", Command "doubleOr", Operator "|", Command "Uparrow",
     Command "Downarrow", Operator "/", Command "langle", Command "lceil", Command "lfloor",
     Command "backslash", Command "rangle", Command "rceil", Command "rfloor"])
-    (scan "\\uparrow \\downarrow \\| \\} \\Uparrow \\Downarrow / \\langle \\lceil \\lfloor \\backslash \\rangle \\rceil \\rfloor"))
+    (scan "\\uparrow \\downarrow \\} \\| | \\Uparrow \\Downarrow / \\langle \\lceil \\lfloor \\backslash \\rangle \\rceil \\rfloor"))
+-- \\| Command "doubleOr",
+-- Problems with recognizing command \| (rendered as ||)
+-- \\} - in this context it shouldn't it be a command?
 
 testBin :: Test
 testBin = TestCase (assertEqual "Binary symbols"
@@ -109,7 +112,7 @@ test1 = TestCase (assertEqual "Testing simple Sup; expression: k^2"
 test2 :: Test
 test2 = TestCase (assertEqual "Nested commands; expression: \\frac{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"
     (Right [MyStr "aaa", BodyBegin, MyNum "1",Command "frac", BodyBegin, Command "frac", BodyBegin, MyNum "2",Operator "+",MyNum "3",Operator "-",MyNum "4", BodyEnd,BodyBegin, MyNum "3",BodyEnd,BodyEnd, BodyBegin,MyNum "4",BodyEnd,BodyEnd,BodyBegin,MyNum "5",BodyEnd])
-    (scan "\\aaa{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
+    (scan "aaa{1 \\frac{ \\frac{2 + 3 - 4}{3}}{4}}{5}"))
 
 test3 :: Test
 test3 = TestCase (assertEqual "Operators and Brackets; expression: =+*/!<>|:() ' '' ''' ''''"
@@ -255,3 +258,9 @@ test31 :: Test
 test31 = TestCase (assertEqual "test using newline inside command: \\frac{1}%fdsfdsa \n{2}"
     (Right [Command "frac", BodyBegin, MyNum "1",BodyEnd,BodyBegin,MyNum "2",BodyEnd])
     (scan "\\frac\n{1}%fdsafdsa \n{2} \n"))
+
+test32 :: Test
+test32 = TestCase (assertEqual "array with lines example "
+    (Right [Command "begin",BodyBegin,MyStr "array",BodyEnd,BodyBegin,MyStr "c",Operator "|",MyStr "c",BodyEnd,MyNum "1",Operator "&",
+    MyNum "2",Operator "\n",Command "hline",MyNum "3",Operator "&",MyNum "4",Command "end",BodyBegin,MyStr "array",BodyEnd])
+    (scan "\\begin{array}{c | c} 1 & 2 \\\\ \\hline 3 & 4 \\end{array}"))
