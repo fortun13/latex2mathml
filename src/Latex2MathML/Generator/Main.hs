@@ -7,12 +7,13 @@ import System.IO
 import System.Exit
 
 generate :: [ASTModel] -> Either String [Char]
-generate lst = return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html  PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN\" \n \"http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n<head>\n<title>MathML Output File</title> \n </head> \n <body> \n <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n" ++ generate' lst ++  "\n</math>\n</body>\n</html>")
+generate list = return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html  PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN\" \n \"http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n<head>\n<title>MathML Output File</title> \n </head> \n <body> \n <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n" ++ generate' list ++  "\n</math>\n</body>\n</html>")
 
 generate' :: [ASTModel] -> [Char]
 generate' [] = ""
 generate' ((ASTSub paramsSub):(ASTSup paramsSup):tail) = generateSubSup paramsSub paramsSup ++ generate' tail
 generate' ((ASTSup paramsSub):(ASTSub paramsSup):tail) = generateSubSup paramsSup paramsSub ++ generate' tail
+-- TODO special case: (iii)int, prod, sum, limes with sub/sup
 generate' (head:tail) = "<mrow>\n" ++ (generateFromAST head) ++ "</mrow>\n<hr></hr>\n" ++ generate' tail
 
 generateSubSup :: [ASTModel] -> [ASTModel] -> [Char]
@@ -24,7 +25,12 @@ generateRows (head:tail) = (generateFromAST head) ++ generateRows tail
 
 generateFromAST :: ASTModel -> [Char]
 generateFromAST (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
-generateFromAST (InlineCommand name params body) = "" -- Find out what kind of inline commands are defined - generator needs fixed list
+generateFromAST (InlineCommand name params body)
+    | name == "sqrt" = "<msqrt>\n" ++ generateRows (head body) ++ "</msqrt>\n"
+    | name == "frac" = "<mfrac>\n" ++ generateRows (head body) ++ generateRows (head (tail body)) ++ "</mfrac>\n"
+    | name `elem` accentNames = "\n<mover accent = \"true\">\n<mrow>\n" ++ generateRows (head body) ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
+    | otherwise = ""
+  -- Find out what kind of inline commands are defined - generator needs fixed list
 generateFromAST (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>"
 generateFromAST (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>"
 generateFromAST (BodylessCommand commandName) = (translateSimpleCommandName commandName) ++ "\n"
@@ -34,7 +40,7 @@ generateFromAST (MN value) = "<mn>" ++ value ++ "</mn>\n"
 generateFromAST _ = ""
 
 translateSimpleCommandName :: [Char] -> [Char]
-translateSimpleCommandName name = (fromList (greekList ++ trigList)) ! name
+translateSimpleCommandName name = (fromList (trigList ++ greekList ++ logicList ++ relationList ++ binaryList ++ delimiterList ++ otherList)) ! name
 
 insertMTableBody :: [ASTModel] -> [Char]
 insertMTableBody [] = ""
@@ -42,17 +48,29 @@ insertMTableBody ((ASTOperator "&") : tail) = "</mtd>\n<mtd>" ++ insertMTableBod
 insertMTableBody ((ASTOperator "\n") : tail) = "</mtd>\n</mtr>\n<mtr>\n<mtd>" ++ insertMTableBody tail
 insertMTableBody (elem : tail) = generateFromAST elem ++ insertMTableBody tail
 
--- TODO Mapping for other simple commands, generating accents
-greekList :: [(String, String)]
-greekList = [("A","<mi>&Alpha;</mi>"), ("B","<mi>&Beta;</mi>"), ("Gamma","<mi>&Gamma;</mi>"), ("Delta","<mi>&Delta;</mi>"), ("E","<mi>&Epsilon;</mi>"), ("Z","<mi>&Zeta;</mi>"), ("H","<mi>&Eta;</mi>"), ("Theta","<mi>&Theta;</mi>"), ("I","<mi>&Iota;</mi>"), ("K","<mi>&Kappa;</mi>"), ("Lambda","<mi>&Lambda;</mi>"), ("M","<mi>&Mu;</mi>"), ("N","<mi>&Nu;</mi>"), ("Xi","<mi>&Xi;</mi>"), ("O","<mi>&Omicron;</mi>"), ("Pi","<mi>&Pi;</mi>"), ("P","<mi>&Rho;</mi>"), ("Sigma","<mi>&Sigma;</mi>"), ("T","<mi>&Tau;</mi>"), ("Upsilon","<mi>&Upsilon;</mi>"), ("Phi","<mi>&Phi;</mi>"), ("X","<mi>&Chi;</mi>"), ("Psi","<mi>&Psi;</mi>"), ("Omega","<mi>&Omega;</mi>"),
-                         ("alpha","<mi>&alpha;</mi>"), ("beta","<mi>&beta;</mi>"), ("gamma","<mi>&gamma;</mi>"), ("delta","<mi>&delta;</mi>"), ("epsilon","<mi>&epsilon;</mi>"), ("zeta","<mi>&zeta;</mi>"), ("eta","<mi>&eta;</mi>"), ("theta","<mi>&theta;</mi>"), ("iota","<mi>&iota;</mi>"), ("kappa","<mi>&kappa;</mi>"), ("lambda","<mi>&lambda;</mi>"), ("mu","<mi>&mu;</mi>"), ("nu","<mi>&nu;</mi>"), ("xi","<mi>&xi;</mi>"), ("o","<mi>&omicron;</mi>"), ("pi","<mi>&pi;</mi>"), ("rho","<mi>&rho;</mi>"), ("sigma","<mi>&sigma;</mi>"), ("tau","<mi>&tau;</mi>"), ("upsilon","<mi>&upsilon;</mi>"), ("phi","<mi>&phi;</mi>"), ("chi","<mi>&chi;</mi>"), ("psi","<mi>&psi;</mi>"), ("omega","<mi>&omega;</mi>")]
-
 trigList :: [(String, String)]
 trigList = [("sin","<mi>sin</mi>"),("arcsin","<mi>arcsin</mi>"),("sinh","<mi>sinh</mi>"),("sec","<mi>sec</mi>"),("cos","<mi>cos</mi>"),("arccos","<mi>arccos</mi>"),("cosh","<mi>cosh</mi>"),("csc","<mi>csc</mi>"),("tan","<mi>tan</mi>"),("arctan","<mi>arctan</mi>"),("tanh","<mi>tanh</mi>"),("cot","<mi>cot</mi>"),("coth","<mi>coth</mi>")]
 
-genmap :: Map String String
-genmap = fromList [("A","<mi>&Alpha;</mi>"), ("B","<mi>&Beta;</mi>"), ("Gamma","<mi>&Gamma;</mi>"), ("Delta","<mi>&Delta;</mi>"), ("E","<mi>&Epsilon;</mi>"), ("Z","<mi>&Zeta;</mi>"), ("H","<mi>&Eta;</mi>"), ("Theta","<mi>&Theta;</mi>"), ("I","<mi>&Iota;</mi>"), ("K","<mi>&Kappa;</mi>"), ("Lambda","<mi>&Lambda;</mi>"), ("M","<mi>&Mu;</mi>"), ("N","<mi>&Nu;</mi>"), ("Xi","<mi>&Xi;</mi>"), ("O","<mi>&Omicron;</mi>"), ("Pi","<mi>&Pi;</mi>"), ("P","<mi>&Rho;</mi>"), ("Sigma","<mi>&Sigma;</mi>"), ("T","<mi>&Tau;</mi>"), ("Upsilon","<mi>&Upsilon;</mi>"), ("Phi","<mi>&Phi;</mi>"), ("X","<mi>&Chi;</mi>"), ("Psi","<mi>&Psi;</mi>"), ("Omega","<mi>&Omega;</mi>"),
-    ("alpha","<mi>&alpha;</mi>"), ("beta","<mi>&beta;</mi>"), ("gamma","<mi>&gamma;</mi>"), ("delta","<mi>&delta;</mi>"), ("epsilon","<mi>&epsilon;</mi>"), ("zeta","<mi>&zeta;</mi>"), ("eta","<mi>&eta;</mi>"), ("theta","<mi>&theta;</mi>"), ("iota","<mi>&iota;</mi>"), ("kappa","<mi>&kappa;</mi>"), ("lambda","<mi>&lambda;</mi>"), ("mu","<mi>&mu;</mi>"), ("nu","<mi>&nu;</mi>"), ("xi","<mi>&xi;</mi>"), ("o","<mi>&omicron;</mi>"), ("pi","<mi>&pi;</mi>"), ("rho","<mi>&rho;</mi>"), ("sigma","<mi>&sigma;</mi>"), ("tau","<mi>&tau;</mi>"), ("upsilon","<mi>&upsilon;</mi>"), ("phi","<mi>&phi;</mi>"), ("chi","<mi>&chi;</mi>"), ("psi","<mi>&psi;</mi>"), ("omega","<mi>&omega;</mi>"),
-    ("=","<mo>=</mo>"),("-","<mo>&minus;</mo>"), ("*","<mo>&times;</mo>"), ("div","<mo>&divide;</mo>"), ("neq","<mo>&ne;</mo>"), ("approx","<mo>&asymp;</mo>"), ("<","<mo>&lt;</mo>"), ("leq","<mo>&le;</mo>"), (">","<mo>&gt;</mo>"), ("geq","<mo>&ge;</mo>"), ("pm","<mo>&plusmn;</mo>"), ("propto","<mo>&prop;</mo>"), ("sum","<mo>&sum;</mo>"), ("prod","<mo>&prod;</mo>"), ("lfloor","<mo>&lfloor;</mo>"), ("rfloor","<mo>&rfloor;</mo>"), ("lceil","<mo>&lceil;</mo>"), ("rceil","<mo>&rceil;</mo>"),
-    ("'","<mo>&prime;</mo>"), ("''","<mo>&Prime;</mo>"), ("'''","<mo>&tprime;</mo>"), ("''''","<mo>&qprime;</mo>"), ("partial","<mo>&part;</mo>"), ("Delta","<mo>&Delta;</mo>"), ("nabla","<mo>&Del;</mo>"), ("int","<mo>&int;</mo>"), ("iint","<mo>&Int;</mo>"), ("iiint","<mo>&tint;</mo>"), ("iiiint","<mo>&qint;</mo>"), ("oint","<mo>&conint;</mo>"), ("varointclockwise","<mo>&cwconint;</mo>"), ("ointctrclockwise","<mo>&awconint;</mo>"), ("oiint","<mo>&Conint;</mo>"), ("oiiint","<mo>&Cconint;</mo>"), ("infty","<mo>&infin;</mo>"),
-    ("dots","<mo>&hellip;</mo>"), ("vdots","<mo>&vellip;</mo>"), ("cdots","<mo>&ctdot;</mo>"), ("udots","<mo>&utdot;</mo>"), ("ddots","<mo>&dtdot;</mo>")]
+greekList :: [(String, String)]
+greekList = [("Alpha","<mi>&Alpha;</mi>"), ("alpha","<mi>&alpha;</mi>"), ("Beta","<mi>&Beta;</mi>"), ("beta","<mi>&beta;</mi>"), ("gamma","<mi>&gamma;</mi>"), ("Gamma","<mi>&Gamma;</mi>"), ("delta","<mi>&delta;</mi>"), ("Delta","<mi>&Delta;</mi>"),("Epsilon","<mi>&Epsilon;</mi>"), ("epsilon","<mi>&epsilon;</mi>"), ("varepsilon","<mi>&varepsilon;</mi>"), ("Zeta","<mi>&Zeta;</mi>"), ("zeta","<mi>&zeta;</mi>"), ("Eta","<mi>&Eta;</mi>"), ("eta","<mi>&eta;</mi>"), ("Theta","<mi>&Theat;</mi>"), ("theta","<mi>&theat;</mi>"), ("vartheta","<mi>&vartheta;</mi>"), ("Iota","<mi>&Iota;</mi>"), ("iota","<mi>&iota;</mi>"), ("Kappa","<mi>&Kappa;</mi>"), ("kappa","<mi>&kappa;</mi>"), ("Lambda","<mi>&Lambda;</mi>"), ("lambda","<mi>&lambda;</mi>"), ("Mu","<mi>&Mu;</mi>"), ("mu","<mi>&mu;</mi>"), ("Nu","<mi>&Nu;</mi>"), ("nu","<mi>&nu;</mi>"), ("Xi","<mi>&Xi;</mi>"), ("xi","<mi>&xi;</mi>"), ("Pi","<mi>&Pi;</mi>"), ("pi","<mi>&pi;</mi>"), ("varpi","<mi>&varpi;</mi>"), ("Rho","<mi>&Rho;</mi>"), ("rho","<mi>&rho;</mi>"), ("varrho","<mi>&varrho;</mi>"), ("Sigma","<mi>&Sigma;</mi>"), ("sigma","<mi>&sigma;</mi>"), ("varsigma","<mi>&varsigma;</mi>"), ("Tau","<mi>&Tau;</mi>"), ("tau","<mi>&tau;</mi>"), ("Upsilon","<mi>&Upsilon;</mi>"), ("upsilon","<mi>&upsilon;</mi>"), ("Phi","<mi>&Phi;</mi>"), ("phi","<mi>&phi;</mi>"), ("varphi","<mi>&varphi;</mi>"), ("Chi","<mi>&Chi;</mi>"), ("chi","<mi>&chi;</mi>"), ("Psi","<mi>&Psi;</mi>"), ("psi","<mi>&psi;</mi>"), ("Omega","<mi>&Omega;</mi>"), ("omega","<mi>&omega;</mi>"), ("Omicron","<mi>&Omicron;</mi>"), ("omicron","<mi>&omicron;</mi>")]
+
+logicList :: [(String, String)]
+logicList = [("neg","<mi>&not;</mi>"), ("land","<mi>&and;</mi>"), ("lor","<mi>&or;</mi>"), ("forall","<mi>&forall;</mi>"), ("exists","<mi>&exists;</mi>"), ("nexists","<mi>&nexists;</mi>"), ("leftarrow","<mi>&larr;</mi>"), ("gets","<mi>&larr;</mi>"), ("rightarrow","<mi>&rarr;</mi>"), ("Rightarrow","<mi>&rArr;</mi>"), ("to","<mi>&rarr;</mi>"), ("leftrightarrow","<mi>&harr;</mi>"), ("Leftrightarrow","<mi>&hArr;</mi>"), ("mapsto","<mi>&mapsto;</mi>"), ("implies","<mi>&rArr;</mi>"), ("iff","<mi>&hArr;</mi>"), ("in","<mi>&isin;</mi>"), ("notin","<mi>&notin;</mi>"), ("ni","<mi>&ni;</mi>"), ("top","<mi>&top;</mi>"), ("bot","<mi>&bot;</mi>"), ("subset","<mi>&sub;</mi>"), ("supset","<mi>&sup;</mi>"), ("emptyset","<mi>&empty;</mi>"), ("varnothing","<mi>&empty;</mi>")]
+
+relationList :: [(String, String)]
+relationList = [("parallel","<mi>&spar;</mi>"), ("nparallel","<mi>&npar;</mi>"), ("leq","<mi>&le;</mi>"), ("geq","<mi>&ge;</mi>"), ("doteq","<mi>&doteq;</mi>"), ("asymp","<mi>&asympeq;</mi>"), ("bowtie","<mi>&bowtie;</mi>"), ("ll","<mi>&ll;</mi>"), ("gg","<mi>&g;</mi>"), ("equiv","<mi>&equiv;</mi>"), ("vdash","<mi>&vdash;</mi>"), ("dashv","<mi>&dashv;</mi>"), ("subset","<mi>&sub;</mi>"), ("supset","<mi>&sup;</mi>"), ("approx","<mi>&approx;</mi>"), ("in","<mi>&isin;</mi>"), ("ni","<mi>&ni;</mi>"), ("subseteq","<mi>&subseteq;</mi>"), ("supseteq","<mi>&supseteq;</mi>"), ("cong","<mi>&cong;</mi>"), ("smile","<mi>&smile;</mi>"), ("frown","<mi>&frown;</mi>"), ("nsubseteq","<mi>&nsubseteq;</mi>"), ("nsupseteq","<mi>&nsupseteq;</mi>"), ("simeq","<mi>&simeq;</mi>"), ("models","<mi>&models;</mi>"), ("notin","<mi>&notin;</mi>"), ("sqsubset","<mi>&sqsubset;</mi>"), ("sqsupset","<mi>&sqsupset;</mi>"), ("sim","<mi>&sim;</mi>"), ("perp","<mi>&perp;</mi>"), ("mid","<mi>&mid;</mi>"), ("sqsubseteq","<mi>&sqsubseteq;</mi>"), ("sqsupseteq","<mi>&sqsupseteq;</mi>"), ("propto","<mi>&propto;</mi>"), ("prec","<mi>&prec;</mi>"), ("succ","<mi>&succ;</mi>"), ("preceq","<mi>&preceq;</mi>"), ("succeq","<mi>&succeq;</mi>"), ("neq","<mi>&ne;</mi>"), ("sphericalangle","<mi>&angmsd;</mi>"), ("measuredangle","<mi>&angmsd;</mi>")]
+
+binaryList :: [(String, String)]
+binaryList = [("pm","<mi>&pm;</mi>"), ("cap","<mi>&cap;</mi>"), ("diamond","<mi>&diamond;</mi>"), ("oplus","<mi>&oplus;</mi>"), ("mp","<mi>&mp;</mi>"), ("cup","<mi>&cup;</mi>"), ("bigtriangleup","<mi>&bigtriangleup;</mi>"), ("ominus","<mi>&ominus;</mi>"), ("times","<mi>&times;</mi>"), ("uplus","<mi>&uplus;</mi>"), ("bigtriangledown","<mi>&bigtriangledown;</mi>"), ("otimes","<mi>&otimes;</mi>"), ("div","<mi>&div;</mi>"), ("sqcap","<mi>&sqcap;</mi>"), ("triangleleft","<mi>&triangleleft;</mi>"), ("oslash","<mi>&oslash;</mi>"), ("ast","<mi>&ast;</mi>"), ("sqcup","<mi>&sqcup;</mi>"), ("triangleright","<mi>&triangleright;</mi>"), ("odot","<mi>&odot;</mi>"), ("star","<mi>&starf;</mi>"), ("vee","<mi>&vee;</mi>"), ("bigcirc","<mi>&bigcirc;</mi>"), ("circ","<mi>&cir;</mi>"), ("dagger","<mi>&dagger;</mi>"), ("wedge","<mi>&wedge;</mi>"), ("bullet","<mi>&bullet;</mi>"), ("setminus","<mi>&setminus;</mi>"), ("ddagger","<mi>&ddagger;</mi>"), ("cdot","<mi>&centerdot;</mi>"), ("wr","<mi>&wr;</mi>"), ("amalg","<mi>&amalg;</mi>")]
+
+delimiterList :: [(String, String)]
+delimiterList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>")]
+
+otherList :: [(String, String)]
+otherList = [("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>")]
+
+accentNames :: [String]
+accentNames = ["hat","grave","bar","acute","mathring","check","dot","vec","breve","tilde","ddot","widehat","widetilde"]
+
+accentList :: [(String, String)]
+accentList = [("hat","<mi>&and;</mi>"), ("grave","<mi>&grave;</mi>"), ("bar","<mi>-</mi>"), ("acute","<mi>&acute;</mi>"), ("mathring","<mi>&cir;</mi>"), ("check","<mi>&or;</mi>"), ("dot","<mi>&middot;</mi>"), ("vec","<mi>&rarr;</mi>"), ("breve","<mi>&breve;</mi>"), ("tilde","<mi>&Tilde;</mi>"), ("ddot","<mi>&DoubleDot;</mi>"), ("widehat","<mi>&Hat;</mi>"), ("widetilde","<mi>&Tilde;</mi>")]
