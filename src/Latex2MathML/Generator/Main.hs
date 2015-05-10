@@ -11,33 +11,51 @@ generate list = return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE h
 
 generate' :: [ASTModel] -> [Char]
 generate' [] = ""
-generate' ((ASTSub paramsSub):(ASTSup paramsSup):tail) = generateSubSup paramsSub paramsSup ++ generate' tail
-generate' ((ASTSup paramsSub):(ASTSub paramsSup):tail) = generateSubSup paramsSup paramsSub ++ generate' tail
--- TODO special case: (iii)int, prod, sum, limes with sub/sup
-generate' (head:tail) = "<mrow>\n" ++ (generateFromAST head) ++ "</mrow>\n<hr></hr>\n" ++ generate' tail
+generate' ((BodylessCommand name):(ASTSub subArgs):(ASTSup supArgs):tail)
+    | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' tail
+generate' ((BodylessCommand name):(ASTSup supArgs):(ASTSub subArgs):tail)
+    | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' tail
+generate' ((BodylessCommand name):(ASTSub subArgs):tail)
+    | name `elem` productionNames = generateUnder name subArgs ++ generate' tail
+generate' ((BodylessCommand name):(ASTSup supArgs):tail)
+    | name `elem` productionNames = generateOver name supArgs ++ generate' tail
+generate' ((ASTSub subArgs):(ASTSup supArgs):tail) = generateSubSup subArgs supArgs ++ generate' tail
+generate' ((ASTSup supArgs):(ASTSub subArgs):tail) = generateSubSup subArgs supArgs ++ generate' tail
+generate' (head:tail) = "<mrow>\n" ++ (generateFromASTElem head) ++ "</mrow>\n<hr></hr>\n" ++ generate' tail
 
 generateSubSup :: [ASTModel] -> [ASTModel] -> [Char]
-generateSubSup params1 params2 = "<mrow>\n<msubsup>\n<mi></mi>\n<mrow>\n" ++ generateRows params1 ++ "</mrow>\n<mrow>\n" ++ generateRows params2 ++ "</mrow>\n</msubsup>\n</mrow>\n"
+generateSubSup subArgs supArgs = "<mrow>\n<msubsup>\n<mi></mi>\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</msubsup>\n</mrow>\n"
 
-generateRows :: [ASTModel] -> [Char]
-generateRows [] = ""
-generateRows (head:tail) = (generateFromAST head) ++ generateRows tail
+generateFromASTList :: [ASTModel] -> [Char]
+generateFromASTList [] = ""
+generateFromASTList (head:tail) = (generateFromASTElem head) ++ generateFromASTList tail
 
-generateFromAST :: ASTModel -> [Char]
-generateFromAST (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
-generateFromAST (InlineCommand name params body)
-    | name == "sqrt" = "<msqrt>\n" ++ generateRows (head body) ++ "</msqrt>\n"
-    | name == "frac" = "<mfrac>\n" ++ generateRows (head body) ++ generateRows (head (tail body)) ++ "</mfrac>\n"
-    | name `elem` accentNames = "\n<mover accent = \"true\">\n<mrow>\n" ++ generateRows (head body) ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
+generateUnderOver :: String -> [ASTModel] -> [ASTModel] -> [Char]
+generateUnderOver name subArgs supArgs = "<mrow>\n<munderover>\n" ++ (fromList otherList) ! name ++ "\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</munderover>\n</mrow>\n"
+
+generateUnder :: String -> [ASTModel] -> [Char]
+generateUnder name subArgs = "<mrow>\n<munder>\n" ++ (fromList otherList) ! name ++ "\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n</munder>\n</mrow>\n"
+
+generateOver :: String -> [ASTModel] -> [Char]
+generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherList) ! name ++ "\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</mover>\n</mrow>\n"
+
+generateFromASTElem :: ASTModel -> [Char]
+generateFromASTElem (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
+generateFromASTElem (InlineCommand "frac" params (fst:sec:tail)) = "<mfrac>\n" ++ generateFromASTList fst ++ generateFromASTList sec ++ "</mfrac>\n"
+generateFromASTElem (InlineCommand name params (fst:tail))
+    | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList fst ++ "</msqrt>\n"
+    | name `elem` accentNames = "\n<mover accent = \"true\">\n<mrow>\n" ++ generateFromASTList fst ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
     | otherwise = ""
-  -- Find out what kind of inline commands are defined - generator needs fixed list
-generateFromAST (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>"
-generateFromAST (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>"
-generateFromAST (BodylessCommand commandName) = (translateSimpleCommandName commandName) ++ "\n"
-generateFromAST (ASTOperator name) = "<mo>" ++ name ++ "</mo>\n"
-generateFromAST (Variable value) = "<mi>" ++ [value] ++ "</mi>\n"
-generateFromAST (MN value) = "<mn>" ++ value ++ "</mn>\n"
-generateFromAST _ = ""
+generateFromASTElem (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>"
+generateFromASTElem (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>"
+generateFromASTElem (BodylessCommand commandName) = (translateSimpleCommandName commandName) ++ "\n"
+generateFromASTElem (ASTOperator name)
+    | name == "<" = "<mo>&lt;</mo>\n"
+    | name == ">" = "<mo>&gt;</mo>\n"
+    | otherwise = "<mo>" ++ name ++ "</mo>\n"
+generateFromASTElem (Variable value) = "<mi>" ++ [value] ++ "</mi>\n"
+generateFromASTElem (MN value) = "<mn>" ++ value ++ "</mn>\n"
+generateFromASTElem _ = ""
 
 translateSimpleCommandName :: [Char] -> [Char]
 translateSimpleCommandName name = (fromList (trigList ++ greekList ++ logicList ++ relationList ++ binaryList ++ delimiterList ++ otherList)) ! name
@@ -46,7 +64,7 @@ insertMTableBody :: [ASTModel] -> [Char]
 insertMTableBody [] = ""
 insertMTableBody ((ASTOperator "&") : tail) = "</mtd>\n<mtd>" ++ insertMTableBody tail
 insertMTableBody ((ASTOperator "\n") : tail) = "</mtd>\n</mtr>\n<mtr>\n<mtd>" ++ insertMTableBody tail
-insertMTableBody (elem : tail) = generateFromAST elem ++ insertMTableBody tail
+insertMTableBody (elem : tail) = generateFromASTElem elem ++ insertMTableBody tail
 
 trigList :: [(String, String)]
 trigList = [("sin","<mi>sin</mi>"),("arcsin","<mi>arcsin</mi>"),("sinh","<mi>sinh</mi>"),("sec","<mi>sec</mi>"),("cos","<mi>cos</mi>"),("arccos","<mi>arccos</mi>"),("cosh","<mi>cosh</mi>"),("csc","<mi>csc</mi>"),("tan","<mi>tan</mi>"),("arctan","<mi>arctan</mi>"),("tanh","<mi>tanh</mi>"),("cot","<mi>cot</mi>"),("coth","<mi>coth</mi>")]
@@ -67,7 +85,10 @@ delimiterList :: [(String, String)]
 delimiterList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>")]
 
 otherList :: [(String, String)]
-otherList = [("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>")]
+otherList = [("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("lim","<mi>lim</mi>"), ("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("exp","<mi>&exponentiale;</mi>")]
+
+productionNames :: [String]
+productionNames = ["int","iint","iiint","iiiint","sum","prod","lim"]
 
 accentNames :: [String]
 accentNames = ["hat","grave","bar","acute","mathring","check","dot","vec","breve","tilde","ddot","widehat","widetilde"]

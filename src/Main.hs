@@ -18,7 +18,8 @@ main = do
 --    print $ scan "2^long \\sin \\alpha" >>= parse
 --    writeFile "output.xhtml" (head $ rights $ [generate $ head $ rights $ [parse $ head $ rights $ [scan "2^long \\sin \\alpha"]]])
     writeFile "output.xhtml" (head $ rights $ [generate $ head $ rights $ [parse $ head $ rights $ [scan "\\hat{matrix} \\sqrt{25} \\frac{3}{4} \\iint"]]])
-    print $ head $ rights $ [parse $ head $ rights $ [scan "\\hat{matrix} \\sqrt{25} \\frac{3}{4} \\iint"]]
+    writeFile "output2.xhtml" (head $ rights $ [generate $ head $ rights $ [parse $ head $ rights $ [scan "\\int^{10}_1 \\int_{11}^{20} \\sum^{10}_{1} \\prod_{1}^{10} \\lim_{x \\to \\infty}^{12} \\exp(-x) = 0"]]])
+    print $ head $ rights $ [parse $ head $ rights $ [scan "\\int^{10}_1 \\int_{11}^{20} \\sum^{10}_{1} \\prod_{1}^{10} \\lim_{x \\to \\infty}^{12} \\exp(-x) = 0"]]
 --    writeFile "output.xhtml" (head $ rights $ [generate $ head $ rights $ [parse $ head $ rights $ [scan "32^{101}_43 ala_{ma}^{kota}"]]])
     -- TODO it's a very primitive way to extract right value from Either
     -- TODO There is module Data.Either.Unwrap (IntelliJ suggest Data.Either.Extra) withs function fromRight (for a single Either, not list)
