@@ -49,7 +49,6 @@ parseCommand name lst@(h:t)
     | Data.Map.member name commandsArity = do
         tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name []
         return (fst tmp,snd tmp ++ (drop (commandsArity ! name) lst))
---        let tmp = take (commandsArity ! name) t
     | otherwise = return (BodylessCommand name,lst)
 
 readParameters :: [Token] -> Either String ([ASTModel],[Token])
@@ -120,4 +119,4 @@ readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (t
 readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyStr tl : t))
 readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyNum tl : t))
 readSupOrSub (h:t) type' = parse' [h] BodyEnd >>= (\x -> return (type' $ fst x,t))
-readSupOrSub lst type' = throwError $ "Error at parsing " ++ (show $ type' []) ++ " before" ++ (show $ take 10 lst)
+readSupOrSub lst type' = throwError $ "Error at parsing " ++ show (type' []) ++ " before" ++ show (take 10 lst)

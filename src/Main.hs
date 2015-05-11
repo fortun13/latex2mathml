@@ -12,7 +12,7 @@ import Control.Monad.Trans.Either
 main :: IO a
 main =  do
 --    _ <- runTestTT tests
-    eitherT (\x -> print x) (\x -> saveToFile "output.xhtml" x) (hoistEither $ scan "\\frac{\\alpha}{\\beta}" >>= parse >>= generate)
+    eitherT (print) (saveToFile "output.xhtml") (hoistEither $ scan "\\frac{\\alpha}{\\beta}" >>= parse >>= generate)
     exitSuccess
 
 saveToFile :: String -> String -> IO ()

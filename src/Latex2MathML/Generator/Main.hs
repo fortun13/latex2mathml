@@ -41,7 +41,7 @@ generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherList) ! name +
 
 generateFromASTElem :: ASTModel -> [Char]
 generateFromASTElem (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
-generateFromASTElem (InlineCommand "frac" params (fst:sec:rest)) = "<mfrac>\n" ++ generateFromASTList fst ++ generateFromASTList sec ++ "</mfrac>\n"
+generateFromASTElem (InlineCommand "frac" _ (fst:sec:_)) = "<mfrac>\n" ++ generateFromASTList fst ++ generateFromASTList sec ++ "</mfrac>\n"
 generateFromASTElem (InlineCommand name params (fst:rest))
     | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList fst ++ "</msqrt>\n"
     | name `elem` accentNames = "\n<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList fst ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
