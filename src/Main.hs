@@ -13,6 +13,9 @@ main :: IO a
 main =  do
 --    _ <- runTestTT tests
     eitherT (print) (saveToFile "output.xhtml") (hoistEither $ scan "\\frac{\\alpha}{\\beta}" >>= parse >>= generate)
+    eitherT (print) (saveToFile "output2.xhtml") (hoistEither $ scan "\\int^{10}_1 \\int_{11}^{20} \\sum^{10}_{1} \\prod_{1}^{10} \\lim_{x \\to \\infty}^{12} \\exp(-x) = 0" >>= parse >>= generate)
+    print $ scan "A_{m,n} = \\begin{matrix} \\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix} & 2 \\\\ 3 & 4 \\end{matrix}" >>= parse
+    eitherT (print) (saveToFile "output3.xhtml") (hoistEither $ scan "A_{m,n} = \\begin{matrix} \\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix} & 2 \\\\ 3 & 4 \\end{matrix}" >>= parse >>= generate)
     exitSuccess
 
 saveToFile :: String -> String -> IO ()

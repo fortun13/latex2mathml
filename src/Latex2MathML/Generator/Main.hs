@@ -21,14 +21,14 @@ generate' ((BodylessCommand name):(ASTSup supArgs):rest)
     | name `elem` productionNames = generateOver name supArgs ++ generate' rest
 generate' ((ASTSub subArgs):(ASTSup supArgs):rest) = generateSubSup subArgs supArgs ++ generate' rest
 generate' ((ASTSup supArgs):(ASTSub subArgs):rest) = generateSubSup subArgs supArgs ++ generate' rest
-generate' (fst:rest) = "<mrow>\n" ++ (generateFromASTElem fst) ++ "</mrow>\n<hr></hr>\n" ++ generate' rest
+generate' (firstElement:rest) = "<mrow>\n" ++ (generateFromASTElem firstElement) ++ "</mrow>\n<hr></hr>\n" ++ generate' rest
 
 generateSubSup :: [ASTModel] -> [ASTModel] -> [Char]
 generateSubSup subArgs supArgs = "<mrow>\n<msubsup>\n<mi></mi>\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</msubsup>\n</mrow>\n"
 
 generateFromASTList :: [ASTModel] -> [Char]
 generateFromASTList [] = ""
-generateFromASTList (fst:rest) = (generateFromASTElem fst) ++ generateFromASTList rest
+generateFromASTList (firstElement:rest) = (generateFromASTElem firstElement) ++ generateFromASTList rest
 
 generateUnderOver :: String -> [ASTModel] -> [ASTModel] -> [Char]
 generateUnderOver name subArgs supArgs = "<mrow>\n<munderover>\n" ++ (fromList otherList) ! name ++ "\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</munderover>\n</mrow>\n"
@@ -41,10 +41,10 @@ generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherList) ! name +
 
 generateFromASTElem :: ASTModel -> [Char]
 generateFromASTElem (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
-generateFromASTElem (InlineCommand "frac" _ (fst:sec:_)) = "<mfrac>\n" ++ generateFromASTList fst ++ generateFromASTList sec ++ "</mfrac>\n"
-generateFromASTElem (InlineCommand name params (fst:rest))
-    | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList fst ++ "</msqrt>\n"
-    | name `elem` accentNames = "\n<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList fst ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
+generateFromASTElem (InlineCommand "frac" _ (firstElement:sec:_)) = "<mfrac>\n" ++ generateFromASTList firstElement ++ generateFromASTList sec ++ "</mfrac>\n"
+generateFromASTElem (InlineCommand name params (firstElement:rest))
+    | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList firstElement ++ "</msqrt>\n"
+    | name `elem` accentNames = "\n<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n"  ++ ((fromList accentList) ! name) ++ "\n" ++ "</mover>\n"
     | otherwise = ""
 generateFromASTElem (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>"
 generateFromASTElem (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>"
@@ -64,13 +64,13 @@ insertMTableBody :: [ASTModel] -> [Char]
 insertMTableBody [] = ""
 insertMTableBody ((ASTOperator "&") : rest) = "</mtd>\n<mtd>" ++ insertMTableBody rest
 insertMTableBody ((ASTOperator "\n") : rest) = "</mtd>\n</mtr>\n<mtr>\n<mtd>" ++ insertMTableBody rest
-insertMTableBody (elem : rest) = generateFromASTElem elem ++ insertMTableBody rest
+insertMTableBody (firstElement : rest) = generateFromASTElem firstElement ++ insertMTableBody rest
 
 trigList :: [(String, String)]
 trigList = [("sin","<mi>sin</mi>"),("arcsin","<mi>arcsin</mi>"),("sinh","<mi>sinh</mi>"),("sec","<mi>sec</mi>"),("cos","<mi>cos</mi>"),("arccos","<mi>arccos</mi>"),("cosh","<mi>cosh</mi>"),("csc","<mi>csc</mi>"),("tan","<mi>tan</mi>"),("arctan","<mi>arctan</mi>"),("tanh","<mi>tanh</mi>"),("cot","<mi>cot</mi>"),("coth","<mi>coth</mi>")]
 
 greekList :: [(String, String)]
-greekList = [("Alpha","<mi>&Alpha;</mi>"), ("alpha","<mi>&alpha;</mi>"), ("Beta","<mi>&Beta;</mi>"), ("beta","<mi>&beta;</mi>"), ("gamma","<mi>&gamma;</mi>"), ("Gamma","<mi>&Gamma;</mi>"), ("delta","<mi>&delta;</mi>"), ("Delta","<mi>&Delta;</mi>"),("Epsilon","<mi>&Epsilon;</mi>"), ("epsilon","<mi>&epsilon;</mi>"), ("varepsilon","<mi>&varepsilon;</mi>"), ("Zeta","<mi>&Zeta;</mi>"), ("zeta","<mi>&zeta;</mi>"), ("Eta","<mi>&Eta;</mi>"), ("eta","<mi>&eta;</mi>"), ("Theta","<mi>&Theat;</mi>"), ("theta","<mi>&theat;</mi>"), ("vartheta","<mi>&vartheta;</mi>"), ("Iota","<mi>&Iota;</mi>"), ("iota","<mi>&iota;</mi>"), ("Kappa","<mi>&Kappa;</mi>"), ("kappa","<mi>&kappa;</mi>"), ("Lambda","<mi>&Lambda;</mi>"), ("lambda","<mi>&lambda;</mi>"), ("Mu","<mi>&Mu;</mi>"), ("mu","<mi>&mu;</mi>"), ("Nu","<mi>&Nu;</mi>"), ("nu","<mi>&nu;</mi>"), ("Xi","<mi>&Xi;</mi>"), ("xi","<mi>&xi;</mi>"), ("Pi","<mi>&Pi;</mi>"), ("pi","<mi>&pi;</mi>"), ("varpi","<mi>&varpi;</mi>"), ("Rho","<mi>&Rho;</mi>"), ("rho","<mi>&rho;</mi>"), ("varrho","<mi>&varrho;</mi>"), ("Sigma","<mi>&Sigma;</mi>"), ("sigma","<mi>&sigma;</mi>"), ("varsigma","<mi>&varsigma;</mi>"), ("Tau","<mi>&Tau;</mi>"), ("tau","<mi>&tau;</mi>"), ("Upsilon","<mi>&Upsilon;</mi>"), ("upsilon","<mi>&upsilon;</mi>"), ("Phi","<mi>&Phi;</mi>"), ("phi","<mi>&phi;</mi>"), ("varphi","<mi>&varphi;</mi>"), ("Chi","<mi>&Chi;</mi>"), ("chi","<mi>&chi;</mi>"), ("Psi","<mi>&Psi;</mi>"), ("psi","<mi>&psi;</mi>"), ("Omega","<mi>&Omega;</mi>"), ("omega","<mi>&omega;</mi>"), ("Omicron","<mi>&Omicron;</mi>"), ("omicron","<mi>&omicron;</mi>")]
+greekList = [("A","<mi>&Alpha;</mi>"),("Alpha","<mi>&Alpha;</mi>"), ("alpha","<mi>&alpha;</mi>"), ("B","<mi>&Beta;</mi>"), ("Beta","<mi>&Beta;</mi>"), ("beta","<mi>&beta;</mi>"), ("gamma","<mi>&gamma;</mi>"), ("Gamma","<mi>&Gamma;</mi>"), ("delta","<mi>&delta;</mi>"), ("Delta","<mi>&Delta;</mi>"),("Epsilon","<mi>&Epsilon;</mi>"), ("E","<mi>&Epsilon;</mi>"), ("epsilon","<mi>&epsilon;</mi>"), ("varepsilon","<mi>&varepsilon;</mi>"), ("Zeta","<mi>&Zeta;</mi>"), ("zeta","<mi>&zeta;</mi>"), ("Z","<mi>&Zeta;</mi>"), ("Eta","<mi>&Eta;</mi>"), ("eta","<mi>&eta;</mi>"), ("H","<mi>&Eta;</mi>"), ("Theta","<mi>&Theat;</mi>"), ("theta","<mi>&theat;</mi>"), ("vartheta","<mi>&vartheta;</mi>"), ("Iota","<mi>&Iota;</mi>"), ("iota","<mi>&iota;</mi>"), ("I","<mi>&Iota;</mi>"), ("Kappa","<mi>&Kappa;</mi>"), ("kappa","<mi>&kappa;</mi>"), ("K","<mi>&Kappa;</mi>"), ("Lambda","<mi>&Lambda;</mi>"), ("lambda","<mi>&lambda;</mi>"), ("Mu","<mi>&Mu;</mi>"), ("mu","<mi>&mu;</mi>"), ("M","<mi>&Mu;</mi>"), ("Nu","<mi>&Nu;</mi>"), ("nu","<mi>&nu;</mi>"), ("N","<mi>&Nu;</mi>"), ("Xi","<mi>&Xi;</mi>"), ("xi","<mi>&xi;</mi>"), ("Pi","<mi>&Pi;</mi>"), ("pi","<mi>&pi;</mi>"), ("varpi","<mi>&varpi;</mi>"), ("Rho","<mi>&Rho;</mi>"), ("rho","<mi>&rho;</mi>"), ("P","<mi>&Rho;</mi>"), ("varrho","<mi>&varrho;</mi>"), ("Sigma","<mi>&Sigma;</mi>"), ("sigma","<mi>&sigma;</mi>"), ("varsigma","<mi>&varsigma;</mi>"), ("Tau","<mi>&Tau;</mi>"), ("tau","<mi>&tau;</mi>"), ("T","<mi>&Tau;</mi>"), ("Upsilon","<mi>&Upsilon;</mi>"), ("upsilon","<mi>&upsilon;</mi>"), ("Phi","<mi>&Phi;</mi>"), ("phi","<mi>&phi;</mi>"), ("varphi","<mi>&varphi;</mi>"), ("Chi","<mi>&Chi;</mi>"), ("chi","<mi>&chi;</mi>"), ("X","<mi>&Chi;</mi>"), ("Psi","<mi>&Psi;</mi>"), ("psi","<mi>&psi;</mi>"), ("Omega","<mi>&Omega;</mi>"), ("omega","<mi>&omega;</mi>"), ("Omicron","<mi>&Omicron;</mi>"), ("omicron","<mi>&omicron;</mi>"), ("O","<mi>&Omicron;</mi>"), ("o","<mi>&omicron;</mi>")]
 
 logicList :: [(String, String)]
 logicList = [("neg","<mi>&not;</mi>"), ("land","<mi>&and;</mi>"), ("lor","<mi>&or;</mi>"), ("forall","<mi>&forall;</mi>"), ("exists","<mi>&exists;</mi>"), ("nexists","<mi>&nexists;</mi>"), ("leftarrow","<mi>&larr;</mi>"), ("gets","<mi>&larr;</mi>"), ("rightarrow","<mi>&rarr;</mi>"), ("Rightarrow","<mi>&rArr;</mi>"), ("to","<mi>&rarr;</mi>"), ("leftrightarrow","<mi>&harr;</mi>"), ("Leftrightarrow","<mi>&hArr;</mi>"), ("mapsto","<mi>&mapsto;</mi>"), ("implies","<mi>&rArr;</mi>"), ("iff","<mi>&hArr;</mi>"), ("in","<mi>&isin;</mi>"), ("notin","<mi>&notin;</mi>"), ("ni","<mi>&ni;</mi>"), ("top","<mi>&top;</mi>"), ("bot","<mi>&bot;</mi>"), ("subset","<mi>&sub;</mi>"), ("supset","<mi>&sup;</mi>"), ("emptyset","<mi>&empty;</mi>"), ("varnothing","<mi>&empty;</mi>")]
