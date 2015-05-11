@@ -52,10 +52,7 @@ readOperator lst@(h:t) buffer n
 readString :: String -> String -> Integer -> Either String (Token,String)
 readString [] [] _ = return (End,[])
 readString [] buffer _ = return (MyStr $ reverse buffer,[])
-readString (h:t) "" _
-    | h `elem` "AEZHIKMNOoTX" = return (Command [h],t)
 readString lst@(h:t) buffer n
-    | h `elem` "AEZHIKMNOoTX" = return (MyStr $ reverse buffer,lst)
     | isLetter h = readString t (h:buffer) n
     | h == ' ' = readString t buffer n
     | otherwise = return (MyStr $ reverse buffer,lst)
