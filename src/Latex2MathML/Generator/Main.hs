@@ -40,7 +40,14 @@ generateOver :: String -> [ASTModel] -> [Char]
 generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherList) ! name ++ "\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</mover>\n</mrow>\n"
 
 generateFromASTElem :: ASTModel -> [Char]
-generateFromASTElem (ComplexCommand name params body) = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n" --TODO Alignment parameters for array?
+generateFromASTElem (ComplexCommand name params body)
+    | name == "pmatrix" = "<mfenced open='(' close=')' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "bmatrix" = "<mfenced open='[' close=']' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "Bmatrix" = "<mfenced open='{' close='}' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "vmatrix" = "<mfenced open='|' close='|' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "Vmatrix" = "<mfenced open='&spar;' close='&spar;' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | otherwise = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n"
+    --TODO Alignment parameters for array?
 generateFromASTElem (InlineCommand "frac" _ (firstElement:sec:_)) = "<mfrac>\n" ++ generateFromASTList firstElement ++ generateFromASTList sec ++ "</mfrac>\n"
 generateFromASTElem (InlineCommand name params (firstElement:rest))
     | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList firstElement ++ "</msqrt>\n"
