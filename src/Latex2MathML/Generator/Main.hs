@@ -2,11 +2,9 @@ module Latex2MathML.Generator.Main where
 
 import Latex2MathML.Utils.Definitions
 import Data.Map
-import Data.String
-import System.IO
-import System.Exit
+import Control.Monad.Trans.Either
 
-generate :: [ASTModel] -> Either String String
+generate :: [ASTModel] -> EitherT String IO String
 generate list = return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html  PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN\" \n \"http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n<head>\n<title>MathML Output File</title> \n </head> \n <body> \n <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n" ++ generate' list ++  "\n</math>\n</body>\n</html>")
 
 generate' :: [ASTModel] -> [Char]

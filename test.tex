@@ -1,0 +1,33 @@
+\documentclass[a4paper,11pt]{article} 
+\usepackage[polish]{babel} 
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{anysize}
+\marginsize{3cm}{3cm}{3cm}{3cm}
+
+\begin{document}
+
+\section*{Całka Riemanna}
+\label{sec:calka}
+
+\flushleft{Niech dana będzie funkcja ograniczona $f\colon[a, b]\to R.$ \emph{Sumą częściową} (Riemanna) nazywa się liczbę 
+
+$$R_{f, P(q_1, , q_n)} = \sum_{i = 1}^n f(q_i) \cdot \Delta p_i.$$ 
+
+Funkcję f nazywa się całkowalną w sensie Riemanna lub krótko R-całkowalną, jeśli dla dowolnego ciągu normalnego $(P^k)$ podziałów przedziału $[a, b]$, istnieje (niezależna od wyboru punktów pośrednich) granica
+
+$$R_f = \lim_{k \to \infty} R_{f, P^k q_1^k, , q_{n_k}^k}$$
+
+nazywana wtedy całką Riemanna tej funkcji. Równoważnie: jeżeli istnieje taka liczba $R_f$, że dla dowolnej liczby rzeczywistej  $\varepsilon > 0$ istnieje taka liczba rzeczywista $\delta > 0$, że dla dowolnego podziału $P(q_1, \dots, q_n)$ o średnicy ${diam}\; P(q_1, \dots, q_n) < \delta;$ bądź też w języku rozdrobnień: że dla dowolnej liczby rzeczywistej $\varepsilon > 0$ istnieje taki podział $S(t_1, \dots, t_m)$ przedziału $[a, b]$, że dla każdego podziału $P(q_1, \dots, q_n)$ rozdrabniającego $S(t_1, \dots, t_m)$ zachodzi
+
+$$R_{f, P(q_1, , q_n)} - R_f < \varepsilon.$$
+
+Funkcję f nazywa się wtedy całkowalną w sensie Riemanna (R-całkowalną), a liczbę $R_f$ jej całką Riemanna.}
+
+\begin{figure}[h]
+\centerline{\includegraphics{calka-riemanna}}
+\caption{Przykłady sum Riemanna}
+\end{figure}
+
+\end{document}

@@ -5,13 +5,11 @@ import Data.List (elemIndex)
 import Data.Maybe (fromJust)
 import Data.Set (member)
 import Latex2MathML.Utils.Definitions
-import Latex2MathML.Utils.Functions (throwError)
+import Control.Monad.Error.Class
+import Control.Monad.Trans.Either
 
-scan :: String -> Either String [Token]
-scan source =
-    case tokenize source 1 of
-        Right (lst,_,_) -> Right lst
-        Left msg -> Left msg
+scan :: String -> EitherT String IO [Token]
+scan source = (hoistEither $ tokenize source 1) >>= (return . fst')
 
 tokenize :: String -> Integer -> Either String ([Token],String,Integer)
 tokenize [] num = return ([],[],num)
@@ -27,7 +25,7 @@ tokenize lst@(h:t) num
     | isLetter h = iterateOver readString lst num
     | h == '{' = addToken BodyBegin t num
     | h == '}' = addToken BodyEnd t num
-    | otherwise = throwError $ "Character not matched: " ++ [h] ++ " before: " ++ take 20 t ++ " line: " ++ show num
+    | otherwise = throwError $ "Scanner: Character not matched: " ++ [h] ++ " before: " ++ take 20 t ++ " line: " ++ show num
 
 addToken :: Token -> String -> Integer -> Either String ([Token],String,Integer)
 addToken type' lst num = (tokenize lst num) >>= (\x -> return ([type'] ++ fst' x,snd' x, thr' x))
@@ -77,27 +75,27 @@ readCommand (h:t) "" l
     | h == ' ' = return (Operator "s",t)
     | otherwise = readCommand t [h] l
 readCommand lst@(h:t) buffer line
-    | h `elem` "[]()" && (buffer == "tfel" || buffer == "thgir") = return (Command $ reverse $ h:buffer,t)
+    | h `elem` "[]()|" && (buffer == "tfel" || buffer == "thgir") = return (Command $ reverse $ h:buffer,t)
     | h == '\\' && (buffer == "tfel" || buffer == "thgir") =
         let tmp = head t
         in
             if (tmp == '{' || tmp == '}')
                 then return (Command $ reverse $ tmp:buffer,tail t)
-                else throwError $ "Unrecognized pattern: " ++ reverse (tmp:h:buffer)
+                else throwError $ "Scanner: Unrecognized pattern: " ++ reverse (tmp:h:buffer)
     | isLetter h = readCommand t (h:buffer) line
     | otherwise = do
         cmd <- getCommand lst (reverse buffer) line
         return (cmd, lst)
 
 getCommand :: String -> String -> Integer -> Either String Token
-getCommand _ "" line = throwError $ "No idea... line: " ++ show line
+getCommand _ "" line = throwError $ "Scanner: No idea... line: " ++ show line
 getCommand lst name line
     | member name commands == True = return $ Command name
     | name == "begin" || name == "end" =
         if readComplexCommandName lst "" == True
         then return $ Command name
-        else throwError $ "Command not recognized around: " ++ name ++ show (take 20 lst) ++ " line: " ++ show line
-    | otherwise = throwError $ "Command not recognized: " ++ name ++ " line: " ++ show line
+        else throwError $ "Scanner: Command not recognized around: " ++ name ++ show (take 20 lst) ++ " line: " ++ show line
+    | otherwise = throwError $ "Scanner: Command not recognized: " ++ name ++ " line: " ++ show line
 
 readComplexCommandName :: String -> String -> Bool
 readComplexCommandName [] _ = False

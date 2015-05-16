@@ -1,11 +1,17 @@
 module Latex2MathML.Parser.Main (parse) where
 
 import Latex2MathML.Utils.Definitions
-import Latex2MathML.Utils.Functions (throwError)
+--import Latex2MathML.Utils.Functions (throwError)
 import Data.Map ((!),member)
+import Control.Monad.Error.Class
+import Control.Monad.Trans.Either
 
-parse :: [Token] -> Either String [ASTModel]
-parse lst = (parse' lst End) >>= (\x -> return $ fst x)
+parse :: [Token] -> EitherT String IO [ASTModel]
+parse lst = (hoistEither $ parse' lst End) >>= (return . fst)
+--parse lst = do
+--    tmp <- liftIO lst
+--    hoistEither $ (parse' tmp End) >>= (return . fst)
+--parse lst = (parse' lst End) >>= (return . fst)
 
 parse' :: [Token] -> Token -> Either String ([ASTModel],[Token])
 parse' [] _ = return ([],[])
@@ -17,7 +23,7 @@ parse' ((Command name):t) stop = iterateUsing parseCommand t name stop
 parse' (Sup:t) stop = iterateUsing readSup t "" stop
 parse' (Sub:t) stop = iterateUsing readSub t "" stop
 parse' ((Operator o) : t) stop = simpleBind t ASTOperator stop o
-parse' lst _ = throwError $ "Fatal error at parsing before: " ++ (show $ take 10 lst)
+parse' lst _ = throwError $ "Parser: Fatal error at parsing before: " ++ (show $ take 10 lst)
 
 simpleBind :: [Token] -> (String -> ASTModel) -> Token -> String -> Either String ([ASTModel],[Token])
 simpleBind lst type' stop value = parse' lst stop >>= (\x -> return ((type' value) : fst x,snd x))
@@ -33,7 +39,7 @@ parseString [] = []
 parseString (h:t) = [Variable h] ++ parseString t
 
 parseCommand :: String -> [Token] -> Either String (ASTModel,[Token])
-parseCommand [] _ = throwError "Empty Command name"
+parseCommand [] _ = throwError "Parser: Empty Command name"
 parseCommand name [] = return (BodylessCommand name,[])
 parseCommand name lst@(h:t)
     | name == "begin" = readComplexCommand lst
@@ -67,7 +73,7 @@ readComplexCommand (BodyBegin : (MyStr n) : BodyEnd : t) = do
     parameters <- readComplexParameters t
     body <- parse' (snd parameters) (Command "end")
     return (ComplexCommand n (fst parameters) (fst body),drop 3 (snd body))
-readComplexCommand lst = throwError $ "Error at parsing complex command before: " ++ (show $ take 10 lst)
+readComplexCommand lst = throwError $ "Parser: Error at parsing complex command before: " ++ (show $ take 10 lst)
 
 readComplexParameters :: [Token] -> Either String ([ASTModel],[Token])
 readComplexParameters (Operator "[" : t) = complexParametersHelper t (Operator "]")
@@ -81,7 +87,7 @@ complexParametersHelper lst stop = do
     return (fst tmp ++ fst tmp2,snd tmp2)
 
 readInlineWithoutBody :: [Token] -> String -> [[ASTModel]] -> Either String (ASTModel,[Token])
-readInlineWithoutBody [] name _ = throwError $ "Error at parsing command: " ++ name
+readInlineWithoutBody [] name _ = throwError $ "Parser: Error at parsing command: " ++ name
 readInlineWithoutBody ((MyNum val) : t) name lst = general val t name lst (\y -> MN [y]) MyNum
 readInlineWithoutBody ((Operator val) : t) name lst = general val t name lst (\y -> ASTOperator [y]) Operator
 readInlineWithoutBody ((MyStr val) : t) name lst = general val t name lst Variable MyStr
@@ -92,7 +98,7 @@ readInlineWithoutBody ((Command val) : t) name lst = do
         if (1 == (commandsArity ! name - length lst))
             then return (InlineCommand val [] (lst ++ [[fst tmp]]),t)
             else readInlineWithoutBody t name (lst ++ [[fst tmp]])
-        else throwError $ "Cannot parse complicated command without braces: " ++ name
+        else throwError $ "Parser: Cannot parse complicated command without braces: " ++ name
 
 general :: String -> [Token] -> String -> [[ASTModel]] -> (Char -> ASTModel) -> (String -> Token) -> Either String (ASTModel,[Token])
 general tokenValue remainingTokens name lst fun type'
@@ -119,4 +125,4 @@ readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (t
 readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyStr tl : t))
 readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyNum tl : t))
 readSupOrSub (h:t) type' = parse' [h] BodyEnd >>= (\x -> return (type' $ fst x,t))
-readSupOrSub lst type' = throwError $ "Error at parsing " ++ show (type' []) ++ " before" ++ show (take 10 lst)
+readSupOrSub lst type' = throwError $ "Parser: Error at parsing " ++ show (type' []) ++ " before" ++ show (take 10 lst)
