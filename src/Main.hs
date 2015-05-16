@@ -17,11 +17,10 @@ main =  do
 --    eitherT (print) (saveToFile "output2.xhtml") (scan "\\int^{10}_1 \\int_{11}^{20} \\sum^{10}_{1} \\prod_{1}^{10} \\lim_{x \\to \\infty}^{12} \\exp(-x) = 0" >>= parse >>= generate)
 --    eitherT (print) (saveToFile "output3.xhtml") (scan "A_{m,n} = \\begin{Vmatrix} \\begin{Bmatrix} 1 & 2 \\\\ 3 & 4 \\end{Bmatrix} & 2 \\\\ 3 & 4 \\end{Vmatrix}" >>= parse >>= generate)
 --    eitherT (print) (saveToFile "output4.xhtml") (scan "A_{m,n} = \\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix} A_{m,n} = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix} A_{m,n} = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} A_{m,n} = \\begin{Bmatrix} 1 & 2 \\\\ 3 & 4 \\end{Bmatrix} A_{m,n} = \\begin{vmatrix} 1 & 2 \\\\ 3 & 4 \\end{vmatrix} A_{m,n} = \\begin{Vmatrix} 1 & 2 \\\\ 3 & 4 \\end{Vmatrix}" >>= parse >>= generate)
-    eitherT (print) (print) (scan "\\left( \\right) \\left[ \\right] \\left| \\right|" >>= parse)
-    eitherT (print) (print) (scan "R_f = \\lim_{k \\to \\infty} R_{f, P^k q_1^k, , q_{n_k}^k}" >>= parse)
-    eitherT (print) (print) (scan "\\cfrac{12}{12} \\binom{12}{42} \\cfrac12 \\binom13 q_1^k q^k_1 a_2 a^2^1" >>= parse)
     content <- readFile "test.tex"
     eitherT (print) (saveToFiles "output") (processContentOfFile content)
+    content <- readFile "otherTests.tex"
+    eitherT (print) (saveToFiles "secOutput") (processContentOfFile content)
     exitSuccess
 
 processContentOfFile :: String -> EitherT String IO [String]

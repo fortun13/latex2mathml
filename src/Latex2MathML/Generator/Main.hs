@@ -52,9 +52,12 @@ generateFromASTElem (ComplexCommand name params body)
     | name == "Vmatrix" = "<mfenced open='&spar;' close='&spar;' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
     | otherwise = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n"
     --TODO Alignment parameters for array?
-generateFromASTElem (InlineCommand "frac" _ (firstElement:sec:_)) = "<mfrac>\n" ++ generateFromASTList firstElement ++ generateFromASTList sec ++ "</mfrac>\n"
-generateFromASTElem (InlineCommand name params (firstElement:rest))
-    | name == "sqrt" = "<msqrt>\n" ++ generateFromASTList firstElement ++ "</msqrt>\n"
+generateFromASTElem (InlineCommand name _ (firstElement:secondElement:_))
+    | name == "frac" = "<mfrac>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n"
+    | name == "cfrac" = "<mfrac>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n"
+    | name == "binom" = "<mfenced>\n<mfrac linethickness=\"0\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n</mfenced>\n"
+generateFromASTElem (InlineCommand name _ (firstElement:_))
+    | name == "sqrt" = "<msqrt>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</msqrt>\n"
     | name `elem` accentNames = "\n<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n"  ++ ((fromList accentTransList) ! name) ++ "\n" ++ "</mover>\n"
     | otherwise = ""
 -- TODO InlineCommands mathrm and text? Binom and cfrac definitley
@@ -64,6 +67,8 @@ generateFromASTElem (BodylessCommand commandName) = (translateSimpleCommandName 
 generateFromASTElem (ASTOperator name)
     | name == "<" = "<mo>&lt;</mo>\n"
     | name == ">" = "<mo>&gt;</mo>\n"
+    | name == "{" = "<mo>&lbrace;</mo>\n"
+    | name == "}" = "<mo>&rbrace;</mo>\n"
     | otherwise = "<mo>" ++ name ++ "</mo>\n"
 generateFromASTElem (Variable value) = "<mi>" ++ [value] ++ "</mi>\n"
 generateFromASTElem (MN value) = "<mn>" ++ value ++ "</mn>\n"
@@ -94,13 +99,12 @@ binaryTransList :: [(String, String)]
 binaryTransList = [("pm","<mi>&pm;</mi>"), ("cap","<mi>&cap;</mi>"), ("diamond","<mi>&diamond;</mi>"), ("oplus","<mi>&oplus;</mi>"), ("mp","<mi>&mp;</mi>"), ("cup","<mi>&cup;</mi>"), ("bigtriangleup","<mi>&bigtriangleup;</mi>"), ("ominus","<mi>&ominus;</mi>"), ("times","<mi>&times;</mi>"), ("uplus","<mi>&uplus;</mi>"), ("bigtriangledown","<mi>&bigtriangledown;</mi>"), ("otimes","<mi>&otimes;</mi>"), ("div","<mi>&div;</mi>"), ("sqcap","<mi>&sqcap;</mi>"), ("triangleleft","<mi>&triangleleft;</mi>"), ("oslash","<mi>&oslash;</mi>"), ("ast","<mi>&ast;</mi>"), ("sqcup","<mi>&sqcup;</mi>"), ("triangleright","<mi>&triangleright;</mi>"), ("odot","<mi>&odot;</mi>"), ("star","<mi>&starf;</mi>"), ("vee","<mi>&vee;</mi>"), ("bigcirc","<mi>&bigcirc;</mi>"), ("circ","<mi>&cir;</mi>"), ("dagger","<mi>&dagger;</mi>"), ("wedge","<mi>&wedge;</mi>"), ("bullet","<mi>&bullet;</mi>"), ("setminus","<mi>&setminus;</mi>"), ("ddagger","<mi>&ddagger;</mi>"), ("cdot","<mi>&centerdot;</mi>"), ("wr","<mi>&wr;</mi>"), ("amalg","<mi>&amalg;</mi>")]
 
 delimiterTransList :: [(String, String)]
-delimiterTransList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>")]
--- uzupe³niæ o nawiasy oraz doubleOr, porównaæ z list¹ w Definitions
+delimiterTransList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>"), ("doubleOr","<mi>&Vert;</mi>"),("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>")]
+-- porównaæ z list¹ w Definitions
 
 otherTransList :: [(String, String)]
-otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>")]
+otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>")]
 -- porównaæ z list¹ w Definitions i uzupe³niæ
--- "left(","right)","left[","right]","left{","right}","left|","right|", "doubleOr", "dots","ddots","cdots","vdots","ldots",
 
 productionNames :: [String]
 productionNames = ["int","iint","iiint","iiiint","sum","prod","lim"]
