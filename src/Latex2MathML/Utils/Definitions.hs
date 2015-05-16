@@ -67,4 +67,4 @@ complex :: Set String
 complex = Data.Set.fromList ["pmatrix","bmatrix","Bmatrix","vmatrix","Vmatrix","matrix","array"]
 
 commandsArity :: Map String Int
-commandsArity = Data.Map.fromList [("frac",2),("sqrt",1)]
+commandsArity = Data.Map.fromList [("frac",2),("sqrt",1),("cfrac",2),("binom",2)]

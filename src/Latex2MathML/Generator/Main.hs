@@ -94,7 +94,7 @@ delimiterTransList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi
 otherTransList :: [(String, String)]
 otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>")]
 -- porównaæ z list¹ w Definitions i uzupe³niæ
--- "left(","right)","left[","right]","left{","right}","left|","right|", "doubleOr", "hline","dots","ddots","cdots","vdots","ldots",
+-- "left(","right)","left[","right]","left{","right}","left|","right|", "doubleOr", "dots","ddots","cdots","vdots","ldots",
 
 productionNames :: [String]
 productionNames = ["int","iint","iiint","iiiint","sum","prod","lim"]
