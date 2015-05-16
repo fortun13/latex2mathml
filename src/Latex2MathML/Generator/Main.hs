@@ -9,6 +9,10 @@ generate list = return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE h
 
 generate' :: [ASTModel] -> [Char]
 generate' [] = ""
+generate' ((BodylessCommand name):(ASTSub subArgs):(MN notImportant):(ASTSup supArgs):rest)
+    | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
+generate' ((BodylessCommand name):(ASTSup supArgs):(ASTSub subArgs):(MN notImportant):rest)
+    | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
 generate' ((BodylessCommand name):(ASTSub subArgs):(ASTSup supArgs):rest)
     | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
 generate' ((BodylessCommand name):(ASTSup supArgs):(ASTSub subArgs):rest)
@@ -17,6 +21,8 @@ generate' ((BodylessCommand name):(ASTSub subArgs):rest)
     | name `elem` productionNames = generateUnder name subArgs ++ generate' rest
 generate' ((BodylessCommand name):(ASTSup supArgs):rest)
     | name `elem` productionNames = generateOver name supArgs ++ generate' rest
+generate' ((ASTSub subArgs):(MN notImportant):(ASTSup supArgs):rest) = generateSubSup subArgs supArgs ++ generate' rest
+generate' ((ASTSup supArgs):(ASTSub subArgs):(MN notImportant):rest) = generateSubSup subArgs supArgs ++ generate' rest
 generate' ((ASTSub subArgs):(ASTSup supArgs):rest) = generateSubSup subArgs supArgs ++ generate' rest
 generate' ((ASTSup supArgs):(ASTSub subArgs):rest) = generateSubSup subArgs supArgs ++ generate' rest
 generate' (firstElement:rest) = "<mrow>\n" ++ (generateFromASTElem firstElement) ++ "</mrow>\n<hr></hr>\n" ++ generate' rest

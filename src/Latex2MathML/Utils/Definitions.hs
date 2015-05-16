@@ -58,7 +58,7 @@ trigList :: [String]
 trigList = ["sin","arcsin","sinh","sec","cos","arccos","cosh","csc","tan","arctan","tanh","cot","coth"]
 
 otherList :: [String]
-otherList = ["prod","sum","lim","int","iint","iiint","iiiint","exp","partial","imath","Re","nabla","aleph","eth","jmath","Im","Box","beth","hbar","ell","wp","infty","gimel","left(","right)","left[","right]","left{","right}","left|","right|", "doubleOr", "hline","dots","ddots","cdots","vdots","ldots","quad"]
+otherList = ["prod","sum","lim","int","iint","iiint","iiiint","exp","partial","imath","Re","nabla","aleph","eth","jmath","Im","Box","beth","hbar","ell","wp","infty","gimel","left(","right)","left[","right]","left|","right|", "doubleOr", "hline","dots","ddots","cdots","vdots","ldots","quad"]
 
 inlinesList :: [String]
 inlinesList = ["frac","cfrac","sqrt","binom","mathrm","text"]
