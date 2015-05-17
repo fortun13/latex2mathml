@@ -45,11 +45,11 @@ generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherTransList) ! n
 
 generateFromASTElem :: ASTModel -> [Char]
 generateFromASTElem (ComplexCommand name params body)
-    | name == "pmatrix" = "<mfenced open='(' close=')' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
-    | name == "bmatrix" = "<mfenced open='[' close=']' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
-    | name == "Bmatrix" = "<mfenced open='{' close='}' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
-    | name == "vmatrix" = "<mfenced open='|' close='|' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
-    | name == "Vmatrix" = "<mfenced open='&spar;' close='&spar;' separators=''><mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "pmatrix" = "<mfenced open='(' close=')' separators=''>\n<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "bmatrix" = "<mfenced open='[' close=']' separators=''>\n<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "Bmatrix" = "<mfenced open='{' close='}' separators=''>\n<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "vmatrix" = "<mfenced open='|' close='|' separators=''>\n<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
+    | name == "Vmatrix" = "<mfenced open='&spar;' close='&spar;' separators=''>\n<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n</mfenced>\n"
     | otherwise = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n"
     --TODO Alignment parameters for array?
 generateFromASTElem (InlineCommand name _ (firstElement:secondElement:_))
@@ -58,11 +58,13 @@ generateFromASTElem (InlineCommand name _ (firstElement:secondElement:_))
     | name == "binom" = "<mfenced>\n<mfrac linethickness=\"0\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n</mfenced>\n"
 generateFromASTElem (InlineCommand name _ (firstElement:_))
     | name == "sqrt" = "<msqrt>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</msqrt>\n"
-    | name `elem` accentNames = "\n<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n"  ++ ((fromList accentTransList) ! name) ++ "\n" ++ "</mover>\n"
+    | name == "text" = "<mtext>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</mtext>\n"
+    | name == "mathrm" = "<mtext>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</mtext>\n"
+    | name `elem` accentNames = "<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n"  ++ ((fromList accentTransList) ! name) ++ "\n</mover>\n"
     | otherwise = ""
--- TODO InlineCommands mathrm and text? Binom and cfrac definitley
-generateFromASTElem (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>"
-generateFromASTElem (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>"
+-- TODO InlineCommands mathrm and text?
+generateFromASTElem (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>\n"
+generateFromASTElem (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>\n"
 generateFromASTElem (BodylessCommand commandName) = (translateSimpleCommandName commandName) ++ "\n"
 generateFromASTElem (ASTOperator name)
     | name == "<" = "<mo>&lt;</mo>\n"
@@ -106,7 +108,7 @@ escapedCharacterTransList :: [(String, String)]
 escapedCharacterTransList = [("\\","<mi>\\</mi>"), ("{","<mi>{</mi>"), ("}","<mi>}</mi>"), ("$","<mi>$</mi>"), ("^","<mi>^</mi>"), ("_","<mi>_</mi>"), ("%","<mi>%</mi>"), ("~","<mi>~</mi>"), ("#","<mi>#</mi>"), ("&","<mi>&amp;</mi>")]
 
 otherTransList :: [(String, String)]
-otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>"), ("doubleOr","<mi>&Vert;</mi>"), ("hline","<mi></mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>"), ("textbackslash","<mi>\\</mi>"), ("lbrace","<mi>{</mi>"), ("rbrace","<mi>}</mi>"), ("quad","<mi></mi>")]
+otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>"), ("doubleOr","<mi>&Vert;</mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>"), ("textbackslash","<mi>\\</mi>"), ("lbrace","<mi>{</mi>"), ("rbrace","<mi>}</mi>"), ("quad","<mi>&nbsp;</mi>")]
 -- TODO hline i quad - jak je przetworzyæ?
 
 productionNames :: [String]
