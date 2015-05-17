@@ -69,13 +69,14 @@ generateFromASTElem (ASTOperator name)
     | name == ">" = "<mo>&gt;</mo>\n"
     | name == "{" = "<mo>&lbrace;</mo>\n"
     | name == "}" = "<mo>&rbrace;</mo>\n"
+    | name == "}" = "<mi>&amp;</mi>\n"
     | otherwise = "<mo>" ++ name ++ "</mo>\n"
 generateFromASTElem (Variable value) = "<mi>" ++ [value] ++ "</mi>\n"
 generateFromASTElem (MN value) = "<mn>" ++ value ++ "</mn>\n"
 generateFromASTElem _ = ""
 
 translateSimpleCommandName :: [Char] -> [Char]
-translateSimpleCommandName name = (fromList (trigTransList ++ greekTransList ++ logicTransList ++ relationTransList ++ binaryTransList ++ delimiterTransList ++ otherTransList)) ! name
+translateSimpleCommandName name = (fromList (trigTransList ++ greekTransList ++ logicTransList ++ relationTransList ++ binaryTransList ++ delimiterTransList ++ escapedCharacterTransList ++ otherTransList)) ! name
 
 insertMTableBody :: [ASTModel] -> [Char]
 insertMTableBody [] = ""
@@ -99,12 +100,14 @@ binaryTransList :: [(String, String)]
 binaryTransList = [("pm","<mi>&pm;</mi>"), ("cap","<mi>&cap;</mi>"), ("diamond","<mi>&diamond;</mi>"), ("oplus","<mi>&oplus;</mi>"), ("mp","<mi>&mp;</mi>"), ("cup","<mi>&cup;</mi>"), ("bigtriangleup","<mi>&bigtriangleup;</mi>"), ("ominus","<mi>&ominus;</mi>"), ("times","<mi>&times;</mi>"), ("uplus","<mi>&uplus;</mi>"), ("bigtriangledown","<mi>&bigtriangledown;</mi>"), ("otimes","<mi>&otimes;</mi>"), ("div","<mi>&div;</mi>"), ("sqcap","<mi>&sqcap;</mi>"), ("triangleleft","<mi>&triangleleft;</mi>"), ("oslash","<mi>&oslash;</mi>"), ("ast","<mi>&ast;</mi>"), ("sqcup","<mi>&sqcup;</mi>"), ("triangleright","<mi>&triangleright;</mi>"), ("odot","<mi>&odot;</mi>"), ("star","<mi>&starf;</mi>"), ("vee","<mi>&vee;</mi>"), ("bigcirc","<mi>&bigcirc;</mi>"), ("circ","<mi>&cir;</mi>"), ("dagger","<mi>&dagger;</mi>"), ("wedge","<mi>&wedge;</mi>"), ("bullet","<mi>&bullet;</mi>"), ("setminus","<mi>&setminus;</mi>"), ("ddagger","<mi>&ddagger;</mi>"), ("cdot","<mi>&centerdot;</mi>"), ("wr","<mi>&wr;</mi>"), ("amalg","<mi>&amalg;</mi>")]
 
 delimiterTransList :: [(String, String)]
-delimiterTransList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>"), ("doubleOr","<mi>&Vert;</mi>"),("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>")]
--- porównaæ z list¹ w Definitions
+delimiterTransList = [("|","<mi>&Vert;</mi>"), ("backslash","<mi>&Backslash;</mi>"), ("{","<mi>&lbrace;</mi>"), ("}","<mi>&rbrace;</mi>"), ("langle","<mi>&langle;</mi>"), ("rangle","<mi>&rangle;</mi>"), ("uparrow","<mi>&uparrow;</mi>"), ("Uparrow","<mi>&Uparrow;</mi>"), ("lceil","<mi>&lceil;</mi>"), ("rceil","<mi>&rceil;</mi>"), ("downarrow","<mi>&downarrow;</mi>"), ("Downarrow","<mi>&Downarrow;</mi>"), ("lfloor","<mi>&lfloor;</mi>"), ("rfloor","<mi>&rfloor;</mi>")]
+
+escapedCharacterTransList :: [(String, String)]
+escapedCharacterTransList = [("\\","<mi>\\</mi>"), ("{","<mi>{</mi>"), ("}","<mi>}</mi>"), ("$","<mi>$</mi>"), ("^","<mi>^</mi>"), ("_","<mi>_</mi>"), ("%","<mi>%</mi>"), ("~","<mi>~</mi>"), ("#","<mi>#</mi>"), ("&","<mi>&amp;</mi>")]
 
 otherTransList :: [(String, String)]
-otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>")]
--- porównaæ z list¹ w Definitions i uzupe³niæ
+otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>"), ("doubleOr","<mi>&Vert;</mi>"), ("hline","<mi></mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>"), ("textbackslash","<mi>\\</mi>"), ("lbrace","<mi>{</mi>"), ("rbrace","<mi>}</mi>"), ("quad","<mi></mi>")]
+-- TODO hline i quad - jak je przetworzyæ?
 
 productionNames :: [String]
 productionNames = ["int","iint","iiint","iiiint","sum","prod","lim"]
