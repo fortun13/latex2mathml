@@ -1,4 +1,4 @@
-module Latex2MathML.Generator.Main where
+module Latex2MathML.Generator.Main(generate) where
 
 import Latex2MathML.Utils.Definitions
 import Data.Map
@@ -109,7 +109,7 @@ escapedCharacterTransList = [("\\","<mi>\\</mi>"), ("{","<mi>{</mi>"), ("}","<mi
 
 otherTransList :: [(String, String)]
 otherTransList = [("prod","<mi>&prod;</mi>"), ("sum","<mi>&sum;</mi>"), ("lim","<mi>lim</mi>"), ("int","<mi>&int;</mi>"), ("iint","<mi>&Int;</mi>"), ("iiint","<mi>&iiint;</mi>"), ("iiiint","<mi>&iiiint;</mi>"), ("exp","<mi>&exponentiale;</mi>"), ("partial","<mi>&part;</mi>"), ("imath","<mi>&imath;</mi>"), ("Re","<mi>&Re;</mi>"), ("nabla","<mi>&nabla;</mi>"), ("aleph","<mi>&aleph;</mi>"), ("eth","<mi>&eth;</mi>"), ("jmath","<mi>&jmath;</mi>"), ("Im","<mi>&Im;</mi>"), ("Box","<mi>&square;</mi>"), ("beth","<mi>&beth;</mi>"), ("hbar","<mi>&hbar;</mi>"), ("ell","<mi>&ell;</mi>"), ("wp","<mi>&wp;</mi>"), ("infty","<mi>&infin;</mi>"), ("gimel","<mi>&gimel;</mi>"), ("left(","<mi>(</mi>"),("right)","<mi>)</mi>"),("left[","<mi>[</mi>"),("right]","<mi>]</mi>"),("left|","<mi>|</mi>"),("right|","<mi>|</mi>"), ("doubleOr","<mi>&Vert;</mi>"), ("dots","<mi>&hellip;</mi>"), ("ddots","<mi>&dtdot;</mi>"), ("cdots","<mi>&ctdot;</mi>"), ("vdots","<mi>&vellip;</mi>"), ("ldots","<mi>&hellip;</mi>"), ("textbackslash","<mi>\\</mi>"), ("lbrace","<mi>{</mi>"), ("rbrace","<mi>}</mi>"), ("quad","<mi>&nbsp;</mi>")]
--- TODO hline i quad - jak je przetworzyæ?
+-- TODO hline i quad - jak je przetworzyï¿½?
 
 productionNames :: [String]
 productionNames = ["int","iint","iiint","iiiint","sum","prod","lim"]
