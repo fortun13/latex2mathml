@@ -31,18 +31,26 @@ readContentAndProcess (filename,rootoutputname) = do
 
 processContentOfFile :: String -> EitherT String IO [String]
 processContentOfFile content =
-    case match (build "$$") content of
+    case getMathElementsIndices content of
         [] -> throwError "No math elements in passed file"
         lst -> splitFileAt content lst
 
-splitFileAt :: String -> [Int] -> EitherT String IO [String]
-splitFileAt content lst
-    | length lst `mod` 2 == 1 = throwError "Bad input file"
-    | otherwise = generateMLFromStrings $ splitFileAt' content lst
+getMathElementsIndices :: String -> [(Int,Int)]
+getMathElementsIndices content = zip (concat $ map (\x -> map (+ length x) (match (build x) content)) ["begin{math}","\\["]) (concat $ map (\x -> match (build x) content) ["\\end{math}","\\]"]) ++ (getIndicesFromShorthand content)
 
-splitFileAt' :: String -> [Int] -> [String]
+getIndicesFromShorthand :: String -> [(Int,Int)]
+getIndicesFromShorthand content = getTuplesFromList $ match (build "$$") content
+
+getTuplesFromList :: [Int] -> [(Int,Int)]
+getTuplesFromList [] = []
+getTuplesFromList (x1:x2:xs) = (x1+2,x2) : getTuplesFromList xs
+
+splitFileAt :: String -> [(Int,Int)] -> EitherT String IO [String]
+splitFileAt content lst = generateMLFromStrings $ splitFileAt' content lst
+
+splitFileAt' :: String -> [(Int,Int)] -> [String]
 splitFileAt' _ [] = []
-splitFileAt' content (x1:x2:xs) = take (x2-x1-2) (drop (x1+2) content) : splitFileAt' content xs
+splitFileAt' content ((x1,x2):xs) = take (x2-x1) (drop (x1) content) : splitFileAt' content xs
 
 generateMLFromStrings :: [String] -> EitherT String IO [String]
 generateMLFromStrings = mapM (\x -> scan x >>= parse >>= generate)

@@ -6,6 +6,8 @@ import Test.HUnit
 import System.Environment
 import Control.Monad.Trans.Either(eitherT)
 import Latex2MathML.Utils.Functions
+--import Latex2MathML.Scanner.Main
+--import Latex2MathML.Parser.Main
 
 main :: IO a
 main =  do
@@ -17,8 +19,5 @@ main =  do
 
     arguments <- getArgs
     eitherT print (mapM_ readContentAndProcess) (parseArguments arguments)
---     content <- readFile "test.tex"
---     eitherT (print) (saveToFiles "output") (processContentOfFile content)
---     content <- readFile "otherTests.tex"
---     eitherT (print) (saveToFiles "secOutput") (processContentOfFile content)
+--    eitherT (print) (print) (scan "\\frac1" >>= parse)
     exitSuccess

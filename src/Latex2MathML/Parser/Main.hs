@@ -46,7 +46,9 @@ parseCommand name lst@(h:t)
     | name == "end" = return (ComplexEnd,drop 2 t)
     | h == BodyBegin = do
         body <- readCommandBody lst
-        return (InlineCommand name [] (fst body),snd body)
+        if member name commandsArity && length (fst body) < commandsArity ! name
+            then throwError $ "Parser: Not enough bodies for command: " ++ name
+            else return (InlineCommand name [] (fst body),snd body)
     | h == Operator "[" = do
         par <- readParameters t
         body <- readCommandBody $ snd par
@@ -88,11 +90,11 @@ complexParametersHelper lst stop = do
     return (fst tmp ++ fst tmp2,snd tmp2)
 
 readInlineWithoutBody :: [Token] -> String -> [[ASTModel]] -> Either String (ASTModel,[Token])
-readInlineWithoutBody [] name _ = throwError $ "Parser: Error at parsing command: " ++ name
-readInlineWithoutBody ((MyNum val) : t) name lst = general val t name lst (\y -> MN [y]) MyNum
-readInlineWithoutBody ((Operator val) : t) name lst = general val t name lst (\y -> ASTOperator [y]) Operator
-readInlineWithoutBody ((MyStr val) : t) name lst = general val t name lst Variable MyStr
-readInlineWithoutBody ((Command val) : t) name lst = do
+readInlineWithoutBody [] name _ = throwError $ "Parser: Error at parsing command: " ++ name ++ "; Probably not enough bodies"
+readInlineWithoutBody (MyNum val : t) name lst = general val t name lst (\y -> MN [y]) MyNum
+readInlineWithoutBody (Operator val : t) name lst = general val t name lst (\y -> ASTOperator [y]) Operator
+readInlineWithoutBody (MyStr val : t) name lst = general val t name lst Variable MyStr
+readInlineWithoutBody (Command val : t) name lst = do
     tmp <- parseCommand val t
     if fst tmp == BodylessCommand val
         then
