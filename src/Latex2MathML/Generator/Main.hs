@@ -28,20 +28,20 @@ generate' ((ASTSup supArgs):(ASTSub subArgs):rest) = generateSubSup subArgs supA
 generate' (firstElement:rest) = "<mrow>\n" ++ (generateFromASTElem firstElement) ++ "</mrow>\n<hr></hr>\n" ++ generate' rest
 
 generateSubSup :: [ASTModel] -> [ASTModel] -> [Char]
-generateSubSup subArgs supArgs = "<mrow>\n<msubsup>\n<mi></mi>\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</msubsup>\n</mrow>\n"
+generateSubSup subArgs supArgs = "<mrow>\n<msubsup>\n<mi></mi>\n<mrow>\n" ++ generate' subArgs ++ "</mrow>\n<mrow>\n" ++ generate' supArgs ++ "</mrow>\n</msubsup>\n</mrow>\n"
 
-generateFromASTList :: [ASTModel] -> [Char]
-generateFromASTList [] = ""
-generateFromASTList (firstElement:rest) = (generateFromASTElem firstElement) ++ generateFromASTList rest
+generateFromASTLis :: [ASTModel] -> [Char]
+generateFromASTLis [] = ""
+generateFromASTLis (firstElement:rest) = (generateFromASTElem firstElement) ++ generate' rest
 
 generateUnderOver :: String -> [ASTModel] -> [ASTModel] -> [Char]
-generateUnderOver name subArgs supArgs = "<mrow>\n<munderover>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</munderover>\n</mrow>\n"
+generateUnderOver name subArgs supArgs = "<mrow>\n<munderover>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generate' subArgs ++ "</mrow>\n<mrow>\n" ++ generate' supArgs ++ "</mrow>\n</munderover>\n</mrow>\n"
 
 generateUnder :: String -> [ASTModel] -> [Char]
-generateUnder name subArgs = "<mrow>\n<munder>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generateFromASTList subArgs ++ "</mrow>\n</munder>\n</mrow>\n"
+generateUnder name subArgs = "<mrow>\n<munder>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generate' subArgs ++ "</mrow>\n</munder>\n</mrow>\n"
 
 generateOver :: String -> [ASTModel] -> [Char]
-generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generateFromASTList supArgs ++ "</mrow>\n</mover>\n</mrow>\n"
+generateOver name supArgs = "<mrow>\n<mover>\n" ++ (fromList otherTransList) ! name ++ "\n<mrow>\n" ++ generate' supArgs ++ "</mrow>\n</mover>\n</mrow>\n"
 
 generateFromASTElem :: ASTModel -> [Char]
 generateFromASTElem (ComplexCommand name params body)
@@ -53,15 +53,15 @@ generateFromASTElem (ComplexCommand name params body)
     | otherwise = "<mtable>\n<mtr>\n<mtd>\n" ++ insertMTableBody body ++ "</mtd>\n</mtr>\n</mtable>\n"
     --TODO Alignment parameters for array?
 generateFromASTElem (InlineCommand name _ (firstElement:secondElement:_))
-    | name == "frac" = "<mfrac>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n"
-    | name == "cfrac" = "<mfrac>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n"
-    | name == "binom" = "<mfenced>\n<mfrac linethickness=\"0\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList secondElement ++ "</mrow>\n</mfrac>\n</mfenced>\n"
+    | name == "frac" = "<mfrac>\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n<mrow>\n" ++ generate' secondElement ++ "</mrow>\n</mfrac>\n"
+    | name == "cfrac" = "<mfrac>\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n<mrow>\n" ++ generate' secondElement ++ "</mrow>\n</mfrac>\n"
+    | name == "binom" = "<mfenced>\n<mfrac linethickness=\"0\">\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n<mrow>\n" ++ generate' secondElement ++ "</mrow>\n</mfrac>\n</mfenced>\n"
 generateFromASTElem (InlineCommand name params (firstElement:_))
-    | name == "sqrt" = "<mroot>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n<mrow>\n" ++ generateFromASTList params ++ "</mrow>\n</mroot>\n"
+    | name == "sqrt" = "<mroot>\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n<mrow>\n" ++ generate' params ++ "</mrow>\n</mroot>\n"
 generateFromASTElem (InlineCommand name _ (firstElement:_))
-    | name == "text" = "<mtext>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</mtext>\n"
-    | name == "mathrm" = "<mtext>\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n</mtext>\n"
-    | name `elem` accentNames = "<mover accent=\"true\">\n<mrow>\n" ++ generateFromASTList firstElement ++ "</mrow>\n"  ++ ((fromList accentTransList) ! name) ++ "\n</mover>\n"
+    | name == "text" = "<mtext>\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n</mtext>\n"
+    | name == "mathrm" = "<mtext>\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n</mtext>\n"
+    | name `elem` accentNames = "<mover accent=\"true\">\n<mrow>\n" ++ generate' firstElement ++ "</mrow>\n"  ++ ((fromList accentTransList) ! name) ++ "\n</mover>\n"
     | otherwise = ""
 generateFromASTElem (ASTSub body) = "<msub>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msub>\n"
 generateFromASTElem (ASTSup body) = "<msup>\n<mi></mi>\n<mrow>\n" ++ generate' body ++ "</mrow>\n</msup>\n"
