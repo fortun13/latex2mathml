@@ -73,12 +73,13 @@ readCommandBody (BodyBegin:t) =
 readCommandBody lst = return ([],lst)
 
 readComplexCommand :: [Token] -> Either String (ASTModel,[Token])
-readComplexCommand [] = return (Empty,[])
 readComplexCommand (BodyBegin : MyStr n : BodyEnd : t) = do
     parameters <- readComplexParameters t
     body <- parse' (snd parameters) (Command "end")
     -- drop 3 because - BodyBegin (Command name (for example array)) and BodyEnd
-    return (ComplexCommand n (fst parameters) (fst body),drop 3 (snd body))
+    if (take 3 $ snd body) /= [BodyBegin,MyStr n,BodyEnd]
+        then throwError $ "Bad closing environment for: " ++ n
+        else return (ComplexCommand n (fst parameters) (fst body),drop 3 (snd body))
 readComplexCommand lst = throwError $ "Parser: Error at parsing complex command before: " ++ (show $ take 10 lst)
 
 readComplexParameters :: [Token] -> Either String ([ASTModel],[Token])
@@ -128,7 +129,12 @@ readSub :: String -> [Token] -> Either String (ASTModel,[Token])
 readSub _ lst = readSupOrSub lst ASTSub
 
 readSupOrSub :: [Token] -> ([ASTModel] -> ASTModel) -> Either String (ASTModel,[Token])
-readSupOrSub (BodyBegin:t) type' = parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
+readSupOrSub (BodyBegin:t) type' =
+    if BodyEnd `elem` t
+        then
+            parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
+        else throwError $ "Parser: Body for subscript or superscript is not closed"
+
 readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (type' [fst x],snd x))
 readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyStr tl : t))
 readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyNum tl : t))
