@@ -63,10 +63,13 @@ readParameters :: [Token] -> Either String ([ASTModel],[Token])
 readParameters lst = parse' lst (Operator "]")
 
 readCommandBody :: [Token] -> Either String ([[ASTModel]],[Token])
-readCommandBody (BodyBegin:t) = do
-    tmp <- parse' t BodyEnd
-    tmp2 <- readCommandBody $ snd tmp
-    return (fst tmp : fst tmp2,snd tmp2)
+readCommandBody (BodyBegin:t) =
+    if BodyEnd `elem` t
+        then do
+            tmp <- parse' t BodyEnd
+            tmp2 <- readCommandBody $ snd tmp
+            return (fst tmp : fst tmp2,snd tmp2)
+        else throwError "Parser: Body for InlineCommand is not closed"
 readCommandBody lst = return ([],lst)
 
 readComplexCommand :: [Token] -> Either String (ASTModel,[Token])
