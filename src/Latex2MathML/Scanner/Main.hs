@@ -14,7 +14,10 @@ scan source = (hoistEither $ tokenize source 1) >>= (return . fst')
 tokenize :: String -> Integer -> Either String ([Token],String,Integer)
 tokenize [] num = return ([],[],num)
 tokenize lst@(h:t) num
-    | h == '%' = tokenize (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst) num
+    | h == '%' =
+        if '\n' `elem` lst
+        then tokenize (snd $ splitAt (fromJust (elemIndex '\n' lst) + 1) lst) num
+        else tokenize [] num
     | h == '\n' && t /= [] = tokenize t (num+1)
     | h == '\\' = iterateOver readCommand t num
     | h == ' ' || h == '\n' = tokenize t num

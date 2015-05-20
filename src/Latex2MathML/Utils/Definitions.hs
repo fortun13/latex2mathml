@@ -23,6 +23,7 @@ data ASTModel = BodylessCommand String |
    ASTSup [ASTModel] |
    Variable Char |
    MN String |
+   Empty |
    ComplexEnd
    deriving (Show,Eq)
 

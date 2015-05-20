@@ -16,7 +16,7 @@ parse lst = (hoistEither $ parse' lst End) >>= (return . fst)
 parse' :: [Token] -> Token -> Either String ([ASTModel],[Token])
 parse' [] _ = return ([],[])
 parse' (h:t) stop
-    | h == stop = return ([],t)
+    | h == stop = return ([Empty],t)
 parse' (MyNum x : t) stop = simpleBind t MN stop x
 parse' (MyStr string : t) stop = parse' t stop >>= (\x -> return (parseString string ++ fst x,snd x))
 parse' (Command name : t) stop = iterateUsing parseCommand t name stop
@@ -32,7 +32,9 @@ iterateUsing :: (String -> [Token] -> Either String (ASTModel,[Token])) -> [Toke
 iterateUsing function lst value stop = do
     tmp <- function value lst
     tmp2 <- parse' (snd tmp) stop
-    return (fst tmp : fst tmp2, snd tmp2)
+    if (fst tmp2) /= [] && last (fst tmp2) == Empty
+        then return (fst tmp : (init $ fst tmp2), snd tmp2)
+        else return (fst tmp : fst tmp2, snd tmp2)
 
 parseString :: String -> [ASTModel]
 parseString = foldr (\x -> (++) [Variable x]) []
@@ -51,8 +53,11 @@ parseCommand name lst@(h:t)
             else return (InlineCommand name [] (fst body),snd body)
     | h == Operator "[" = do
         par <- readParameters t
-        body <- readCommandBody $ snd par
-        return (InlineCommand name (fst par) (fst body),snd body)
+        if last (fst par) == Empty
+            then do
+                body <- readCommandBody $ snd par
+                return (InlineCommand name (fst par) (fst body),snd body)
+            else throwError $ "Parser: Parameters for command: " ++ name ++ " not closed"
     | Data.Map.member name commandsArity = do
         tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name []
         return (fst tmp,snd tmp ++ drop (commandsArity ! name) lst)
@@ -63,24 +68,27 @@ readParameters :: [Token] -> Either String ([ASTModel],[Token])
 readParameters lst = parse' lst (Operator "]")
 
 readCommandBody :: [Token] -> Either String ([[ASTModel]],[Token])
-readCommandBody [] = throwError "Parser: Not closed curly bracket"
 readCommandBody (BodyBegin:t) = do
---    if BodyEnd `elem` t
---        then do
-            tmp <- parse' t BodyEnd
+    tmp <- parse' t BodyEnd
+    if last (fst tmp) == Empty
+        then do
             tmp2 <- readCommandBody $ snd tmp
-            return (fst tmp : fst tmp2,snd tmp2)
---        else throwError "Parser: Body for InlineCommand is not closed"
+            return ((init $ fst tmp) : fst tmp2,snd tmp2)
+        else
+            throwError "Parser: Not closed curly bracket"
 readCommandBody lst = return ([],lst)
 
 readComplexCommand :: [Token] -> Either String (ASTModel,[Token])
 readComplexCommand (BodyBegin : MyStr n : BodyEnd : t) = do
     parameters <- readComplexParameters t
     body <- parse' (snd parameters) (Command "end")
-    -- drop 3 because - BodyBegin (Command name (for example array)) and BodyEnd
-    if (take 3 $ snd body) /= [BodyBegin,MyStr n,BodyEnd]
-        then throwError $ "Bad closing environment for: " ++ n
-        else return (ComplexCommand n (fst parameters) (fst body),drop 3 (snd body))
+    if last (fst body) == Empty
+        then
+        -- drop 3 because - BodyBegin (Command name (for example array)) and BodyEnd
+        if (take 3 $ snd body) /= [BodyBegin,MyStr n,BodyEnd]
+            then throwError $ "Parser: Bad closing environment for: " ++ n
+            else return (ComplexCommand n (fst parameters) (fst body),drop 3 (snd body))
+        else throwError "Parser: Error at parsing complex command"
 readComplexCommand lst = throwError $ "Parser: Error at parsing complex command before: " ++ (show $ take 10 lst)
 
 readComplexParameters :: [Token] -> Either String ([ASTModel],[Token])
@@ -91,8 +99,12 @@ readComplexParameters lst = return ([],lst)
 complexParametersHelper :: [Token] -> Token -> Either String ([ASTModel],[Token])
 complexParametersHelper lst stop = do
     tmp <- parse' lst stop
-    tmp2 <- readComplexParameters $ snd tmp
-    return (fst tmp ++ fst tmp2,snd tmp2)
+    if last (fst tmp) == Empty
+        then do
+            tmp2 <- readComplexParameters $ snd tmp
+            return ((init $ fst tmp) ++ fst tmp2,snd tmp2)
+        else
+            throwError "Parser: Parameters for complex command not enclosed"
 
 readInlineWithoutBody :: [Token] -> String -> [[ASTModel]] -> Either String (ASTModel,[Token])
 readInlineWithoutBody [] name _ = throwError $ "Parser: Error at parsing command: " ++ name ++ "; Probably not enough bodies"
@@ -131,14 +143,20 @@ readSub _ lst = readSupOrSub lst ASTSub
 
 readSupOrSub :: [Token] -> ([ASTModel] -> ASTModel) -> Either String (ASTModel,[Token])
 readSupOrSub (BodyBegin:t) type' = do
---    tmp <- parse' t BodyEnd
-    if BodyEnd `elem` t
+    tmp <- parse' t BodyEnd
+    if snd tmp == []
         then
-            parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
-        else throwError $ "Parser: Body for subscript or superscript is not closed"
+            if last (fst tmp) == Empty
+                then return (type' $ init $ fst tmp,snd tmp)
+                else throwError $ "Parser: Body for subscript or superscript is not closed"
+        else return (type' $ fst tmp,snd tmp)
+--    if BodyEnd `elem` t
+--        then
+--            parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
+--        else throwError $ "Parser: Body for subscript or superscript is not closed"
 
 readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (type' [fst x],snd x))
-readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyStr tl : t))
-readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] BodyEnd >>= (\x -> return (type' $ fst x,MyNum tl : t))
-readSupOrSub (h:t) type' = parse' [h] BodyEnd >>= (\x -> return (type' $ fst x,t))
+readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] End >>= (\x -> return (type' $ fst x,MyStr tl : t))
+readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] End >>= (\x -> return (type' $ fst x,MyNum tl : t))
+readSupOrSub (h:t) type' = parse' [h] End >>= (\x -> return (type' $ fst x,t))
 readSupOrSub lst type' = throwError $ "Parser: Error at parsing " ++ show (type' []) ++ " before" ++ show (take 10 lst)
