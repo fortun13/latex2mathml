@@ -23,6 +23,8 @@ parse' (Command name : t) stop = iterateUsing parseCommand t name stop
 parse' (Sup:t) stop = iterateUsing readSup t "" stop
 parse' (Sub:t) stop = iterateUsing readSub t "" stop
 parse' (Operator o : t) stop = simpleBind t ASTOperator stop o
+parse' (BodyBegin : t) stop = parse' t stop
+parse' (BodyEnd : t) stop = parse' t stop
 parse' lst _ = throwError $ "Parser: Fatal error at parsing before: " ++ (show $ take 10 lst)
 
 simpleBind :: [Token] -> (String -> ASTModel) -> Token -> String -> Either String ([ASTModel],[Token])
