@@ -32,9 +32,10 @@ iterateUsing :: (String -> [Token] -> Either String (ASTModel,[Token])) -> [Toke
 iterateUsing function lst value stop = do
     tmp <- function value lst
     tmp2 <- parse' (snd tmp) stop
-    if (fst tmp2) /= [] && last (fst tmp2) == Empty
-        then return (fst tmp : (init $ fst tmp2), snd tmp2)
-        else return (fst tmp : fst tmp2, snd tmp2)
+    return (fst tmp : fst tmp2, snd tmp2)
+--    if (fst tmp2) /= [] && last (fst tmp2) == Empty
+--        then return (fst tmp : (init $ fst tmp2), snd tmp2)
+--        else return (fst tmp : fst tmp2, snd tmp2)
 
 parseString :: String -> [ASTModel]
 parseString = foldr (\x -> (++) [Variable x]) []
@@ -51,15 +52,25 @@ parseCommand name lst@(h:t)
         if member name commandsArity && length (fst body) < commandsArity ! name
             then throwError $ "Parser: Not enough bodies for command: " ++ name
             else return (InlineCommand name [] (fst body),snd body)
-    | h == Operator "[" = do
-        par <- readParameters t
-        if last (fst par) == Empty
-            then do
-                body <- readCommandBody $ snd par
-                return (InlineCommand name (fst par) (fst body),snd body)
-            else throwError $ "Parser: Parameters for command: " ++ name ++ " not closed"
+    | h == Operator "[" =
+        if name == "sqrt"
+        then do
+            par <- readParameters t
+            if last (fst par) == Empty
+                then
+                    if head (snd par) == BodyBegin
+                        then do
+                            body <- readCommandBody $ snd par
+                            return (InlineCommand name (init $ fst par) (fst body),snd body)
+                        else do
+                            tmp <- readInlineWithoutBody (take (commandsArity ! name) (snd par)) name (init $ fst par) []
+                            return (fst tmp,snd tmp ++ drop (commandsArity ! name) (snd par))
+                else throwError $ "Parser: Parameters for command: " ++ name ++ " not closed"
+        else do
+            tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name [] []
+            return (fst tmp, snd tmp ++ drop (commandsArity ! name) lst)
     | Data.Map.member name commandsArity = do
-        tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name []
+        tmp <- readInlineWithoutBody (take (commandsArity ! name) lst) name [] []
         return (fst tmp,snd tmp ++ drop (commandsArity ! name) lst)
 --        let tmp = take (commandsArity ! name) t
     | otherwise = return (BodylessCommand name,lst)
@@ -106,29 +117,29 @@ complexParametersHelper lst stop = do
         else
             throwError "Parser: Parameters for complex command not enclosed"
 
-readInlineWithoutBody :: [Token] -> String -> [[ASTModel]] -> Either String (ASTModel,[Token])
-readInlineWithoutBody [] name _ = throwError $ "Parser: Error at parsing command: " ++ name ++ "; Probably not enough bodies"
-readInlineWithoutBody (MyNum val : t) name lst = general val t name lst (\y -> MN [y]) MyNum
-readInlineWithoutBody (Operator val : t) name lst = general val t name lst (\y -> ASTOperator [y]) Operator
-readInlineWithoutBody (MyStr val : t) name lst = general val t name lst Variable MyStr
-readInlineWithoutBody (Command val : t) name lst = do
+readInlineWithoutBody :: [Token] -> String -> [ASTModel] -> [[ASTModel]] -> Either String (ASTModel,[Token])
+readInlineWithoutBody [] name _ _ = throwError $ "Parser: Error at parsing command: " ++ name ++ "; Probably not enough bodies"
+readInlineWithoutBody (MyNum val : t) name par lst = general val t name par lst (\y -> MN [y]) MyNum
+readInlineWithoutBody (Operator val : t) name par lst = general val t name par lst (\y -> ASTOperator [y]) Operator
+readInlineWithoutBody (MyStr val : t) name par lst = general val t name par lst Variable MyStr
+readInlineWithoutBody (Command val : t) name par lst = do
     tmp <- parseCommand val t
     if fst tmp == BodylessCommand val
         then
         if 1 == (commandsArity ! name - length lst)
-            then return (InlineCommand val [] (lst ++ [[fst tmp]]),t)
-            else readInlineWithoutBody t name (lst ++ [[fst tmp]])
+            then return (InlineCommand val par (lst ++ [[fst tmp]]),t)
+            else readInlineWithoutBody t name par (lst ++ [[fst tmp]])
         else throwError $ "Parser: Cannot parse complicated command without braces: " ++ name
 
-general :: String -> [Token] -> String -> [[ASTModel]] -> (Char -> ASTModel) -> (String -> Token) -> Either String (ASTModel,[Token])
-general tokenValue remainingTokens name lst fun type'
+general :: String -> [Token] -> String -> [ASTModel] -> [[ASTModel]] -> (Char -> ASTModel) -> (String -> Token) -> Either String (ASTModel,[Token])
+general tokenValue remainingTokens name par lst fun type'
     | length tokenValue > neededLength =
         let
             tmp = take neededLength tokenValue
         in
-            return (InlineCommand name [] (lst ++ makeOneElementBodies tmp fun),type' (drop neededLength tokenValue) : remainingTokens)
-    | length tokenValue == neededLength = return (InlineCommand name [] (lst ++ makeOneElementBodies tokenValue fun),remainingTokens)
-    | otherwise = readInlineWithoutBody remainingTokens name (lst ++ makeOneElementBodies tokenValue fun)
+            return (InlineCommand name par (lst ++ makeOneElementBodies tmp fun),type' (drop neededLength tokenValue) : remainingTokens)
+    | length tokenValue == neededLength = return (InlineCommand name par (lst ++ makeOneElementBodies tokenValue fun),remainingTokens)
+    | otherwise = readInlineWithoutBody remainingTokens name par (lst ++ makeOneElementBodies tokenValue fun)
     where neededLength = commandsArity ! name - length lst
 
 makeOneElementBodies :: String -> (Char -> ASTModel)  -> [[ASTModel]]
@@ -156,6 +167,8 @@ readSupOrSub (BodyBegin:t) type' = do
 --        else throwError $ "Parser: Body for subscript or superscript is not closed"
 
 readSupOrSub (Command name : t) type' = parseCommand name t >>= (\x -> return (type' [fst x],snd x))
+readSupOrSub (MyStr (h:[]) : t) type' = parse' [MyStr [h]] End >>= (\x -> return (type' $ fst x,t))
+readSupOrSub (MyNum (h:[]) : t) type' = parse' [MyNum [h]] End >>= (\x -> return (type' $ fst x,t))
 readSupOrSub (MyStr (h:tl) : t) type' = parse' [MyStr [h]] End >>= (\x -> return (type' $ fst x,MyStr tl : t))
 readSupOrSub (MyNum (h:tl) : t) type' = parse' [MyNum [h]] End >>= (\x -> return (type' $ fst x,MyNum tl : t))
 readSupOrSub (h:t) type' = parse' [h] End >>= (\x -> return (type' $ fst x,t))
