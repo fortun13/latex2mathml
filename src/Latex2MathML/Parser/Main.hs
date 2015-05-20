@@ -63,13 +63,14 @@ readParameters :: [Token] -> Either String ([ASTModel],[Token])
 readParameters lst = parse' lst (Operator "]")
 
 readCommandBody :: [Token] -> Either String ([[ASTModel]],[Token])
-readCommandBody (BodyBegin:t) =
-    if BodyEnd `elem` t
-        then do
+readCommandBody [] = throwError "Parser: Not closed curly bracket"
+readCommandBody (BodyBegin:t) = do
+--    if BodyEnd `elem` t
+--        then do
             tmp <- parse' t BodyEnd
             tmp2 <- readCommandBody $ snd tmp
             return (fst tmp : fst tmp2,snd tmp2)
-        else throwError "Parser: Body for InlineCommand is not closed"
+--        else throwError "Parser: Body for InlineCommand is not closed"
 readCommandBody lst = return ([],lst)
 
 readComplexCommand :: [Token] -> Either String (ASTModel,[Token])
@@ -129,7 +130,8 @@ readSub :: String -> [Token] -> Either String (ASTModel,[Token])
 readSub _ lst = readSupOrSub lst ASTSub
 
 readSupOrSub :: [Token] -> ([ASTModel] -> ASTModel) -> Either String (ASTModel,[Token])
-readSupOrSub (BodyBegin:t) type' =
+readSupOrSub (BodyBegin:t) type' = do
+--    tmp <- parse' t BodyEnd
     if BodyEnd `elem` t
         then
             parse' t BodyEnd >>= (\x -> return (type' $ fst x,snd x))
