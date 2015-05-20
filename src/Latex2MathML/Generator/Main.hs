@@ -11,7 +11,7 @@ generate' :: [ASTModel] -> [Char]
 generate' [] = ""
 generate' ((BodylessCommand name):(ASTSub subArgs):(MN notImportant):(ASTSup supArgs):rest)
     | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
-generate' ((BodylessCommand name):(ASTSup supArgs):(ASTSub subArgs):(MN notImportant):rest)
+generate' ((BodylessCommand name):(ASTSup supArgs):(MN notImportant):(ASTSub subArgs):rest)
     | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
 generate' ((BodylessCommand name):(ASTSub subArgs):(ASTSup supArgs):rest)
     | name `elem` productionNames = generateUnderOver name subArgs supArgs ++ generate' rest
