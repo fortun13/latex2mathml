@@ -71,7 +71,7 @@ generateFromASTElem (ASTOperator name)
     | name == ">" = "<mo>&gt;</mo>\n"
     | name == "{" = "<mo>&lbrace;</mo>\n"
     | name == "}" = "<mo>&rbrace;</mo>\n"
-    | name == "}" = "<mi>&amp;</mi>\n"
+    | name == "&" = "<mi>&amp;</mi>\n"
     | otherwise = "<mo>" ++ name ++ "</mo>\n"
 generateFromASTElem (Variable value) = "<mi>" ++ [value] ++ "</mi>\n"
 generateFromASTElem (MN value) = "<mn>" ++ value ++ "</mn>\n"
